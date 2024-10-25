@@ -1,0 +1,8 @@
+.slds-icon-container {
+    display: flex;
+    align-items: center;
+}
+
+.slds-icon__text {
+    margin-left: 0.5rem; 
+}
