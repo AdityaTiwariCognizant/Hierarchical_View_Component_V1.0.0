@@ -1,8 +1,11 @@
 import { LightningElement,wire,api,track } from 'lwc';
 import getChildRecords from '@salesforce/apex/hierarchicalViewController.getRelatedChildRecords';
 import { getRelatedListsInfo } from "lightning/uiRelatedListApi";
+import {NavigationMixin} from 'lightning/navigation';
 
-export default class RecordListItemView extends LightningElement {
+
+export default class RecordListItemView extends NavigationMixin(LightningElement) {
+
 
     @api recordid; 
     @api parentid
@@ -108,16 +111,21 @@ findRelationShipName(childObjApiName){
 
 handleViewAll(evt){
     console.log('recordid '+this.recordid);
-    const relationshipName = this.findRelationShipName(this.childobjectapiname);
-    const event = new CustomEvent('navigate', {
-        detail: {
-            recordId: this.recordid,
-            relationshipApiName: relationshipName,
-            message: 'Navigation Event Propagated from Child',
+    console.log('parent object api name '+this.parentobjectapiname);
+    console.log('relationship name '+this.findRelationShipName(this.childobjectapiname));
+
+    this[NavigationMixin.Navigate]({
+        type: 'standard__recordRelationshipPage',
+        attributes: {
+            recordId: this.recordid,  // The parent record ID
+            objectApiName:this.parentobjectapiname,
+            relationshipApiName: this.findRelationShipName(this.childobjectapiname),  // The dynamic relationship name
+            actionName: 'view'  // View the related list
         }
+        
     });
-    this.dispatchEvent(event);
     
+
     
 
 }

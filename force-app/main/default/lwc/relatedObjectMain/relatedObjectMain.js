@@ -40,15 +40,8 @@ export default class RelatedObjectMain extends LightningElement {
         }
     }
 
-    selectedContact={
-        Id:'',
-        Name:'',
-        Email:''
-    }
-
     @track childRecords;
 
-    grandChildVisibility=false;
 
     fields = ['Id', 'Name']; 
 
@@ -112,19 +105,6 @@ export default class RelatedObjectMain extends LightningElement {
     
     }
 
-    @wire(getRecord, { recordId: '$selectedObjectId', fields: ['Contact.Id', 'Contact.Name', 'Contact.Email'] })
-    wiredContact({ error, data }) {
-    if (data) {
-        const Contact = data.fields;
-        this.selectedContact.Email = Contact.Email.value;
-        this.selectedContact.Id = Contact.Id.value,
-        this.selectedContact.Name = Contact.Name.value,
-        this.selectedObjectApiName = 'Contact',
-        console.log('Selected Contact Data:', this.selectedContact);
-    } else if (error) {
-        console.error('Error fetching contact details:', error);
-    }
-}
 
     @wire(getChildRecords,{recordId:'$recordId',parentObjectApiName:'$parentObjectApiName',childObjectApiName:'$childApiName'})
     wiredChildRecord({error,data}){
@@ -181,7 +161,12 @@ export default class RelatedObjectMain extends LightningElement {
         const selectedValue = event.target.dataset.id;  // Get the value from the clicked element's data-id
         this.selectedObject = this.relatedListOptions.find(item => item.value === selectedValue).label; // Find the object by value
         this.childApiName = String(this.selectedObject);
-        console.log(JSON.stringify(this.selectedObject));  // Log the selected object to the console
+
+        if(this.childApiName.includes(' ')){
+            this.childApiName = this.childApiName.split(' ').join('_')+'__c';
+        }
+
+        // Log the selected object to the console
         const item = this.relatedListOptions.find(item=>item.value === selectedValue);
         if(item){
             item.isVisible = !item.isVisible;
@@ -206,27 +191,6 @@ console.log('%%%%% '+JSON.stringify(this.relatedListOptions));
         } else if (error) {
             console.error('Error fetching child object info:', error);
         }
-    }
-
-    handleNavigate(event) {
-        try {
-        console.log('Navigating from parent component');
-        const relationshipApiName = event.detail.relationshipApiName;
-        const recordId = event.detail.recordId;
-        console.log('NAVIGATION MESSAGE '+event.detail.message);
-
-        // Use NavigationMixin to navigate to the related list
-        this[NavigationMixin.Navigate]({
-            type: 'standard__recordRelationshipPage',
-            attributes: {
-                recordId: recordId,  // The parent record ID
-                relationshipApiName: relationshipApiName,  // The dynamic relationship name
-                actionName: 'view'  // View the related list
-            }
-        });
-    } catch (error) {
-        console.error('Navigation failed with error: ', error);
-    }
     }
     
     // Style for Parent Icon
@@ -281,13 +245,8 @@ console.log('%%%%% '+JSON.stringify(this.relatedListOptions));
         return true;  // Only show chevron if related records exist
     }
 
-
     /*
 
     Related list need to contain 1. label 2. icon url 3. color 
     */
-
-    
-
-
 }
