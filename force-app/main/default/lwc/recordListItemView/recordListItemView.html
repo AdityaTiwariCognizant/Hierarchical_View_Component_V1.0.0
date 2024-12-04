@@ -1,0 +1,58 @@
+<template>
+
+    <template if:false={recordClicked}>
+    <div class="datatable">
+        <ul class="datatable-header">
+            <li class="icon-header"> </li>
+            <li>Id</li>
+            <li>Name</li>
+            <li>Email</li>
+        </ul>
+        <ul class="datatable-body">
+            <template for:each={viewChildRecords} for:item="record">
+                <li key={record.id}>
+                    <span data-id={record.id} ><button data-id={record.id} class="slds-button slds-button_icon slds-m-right_x-small" onclick={handleRecordSelection}>
+                        <lightning-icon icon-name="utility:chevronright" alternative-text="Toggle" size="x-small"></lightning-icon>
+                    </button></span>
+                    <span onclick={handleRecordSelection} data-id={record.id}>{record.id}</span>
+
+                    <span>{record.name}</span>
+                    <span>{record.email}</span>
+                </li>
+            </template>
+        </ul>
+        <template if:true={requireViewAll}>
+        <footer><button class="slds-button slds-button_neutral slds-align_absolute-center" onclick={handleViewAll}>View All</button></footer>
+        </template>
+    </div>
+</template>
+    <template if:true={recordClicked}>
+        <div class="datatable">
+            <ul class="datatable-header">
+                <li class="icon-header"> </li>
+
+                <li>Id</li>
+                <li>Name</li>
+                <li>Email</li>
+            </ul>
+            <ul class="datatable-body">
+                <li>
+                    <span ><button class="slds-button slds-button_icon slds-m-right_x-small" onclick={handleRecordCollapse}>
+                        <lightning-icon icon-name="utility:chevrondown" alternative-text="Toggle" size="x-small"></lightning-icon>
+                    </button></span>
+                    <span>{selectedRecord.id}</span>
+
+                    <span>{selectedRecord.name}</span>
+                    <span>{selectedRecord.email}</span>
+                </li>
+            </ul>
+
+            <c-related-object-main parentid = {selectedRecord.id} ></c-related-object-main>
+
+        </div>
+    </template>
+
+    
+
+
+</template>

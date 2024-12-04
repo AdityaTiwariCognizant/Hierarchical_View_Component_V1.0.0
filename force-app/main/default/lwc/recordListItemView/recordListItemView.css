@@ -1,0 +1,78 @@
+.datatable {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    width: 100%; /* Make the datatable responsive */
+}
+
+.datatable-header {
+    background-color: #f0f0f0;
+    font-weight: bold;
+    padding: 10px;
+    display: flex; /* Use flexbox for better alignment */
+}
+
+.datatable-header li {
+    flex: 1; /* Each header item takes equal width */
+    text-align: left; /* Align text to the left */
+    padding: 5px; /* Add some padding */
+}
+
+.datatable-body {
+    padding: 10px;
+}
+
+.datatable-body li {
+    border-bottom: 1px solid #ddd;
+    padding: 10px;
+    display: flex; /* Use flexbox for better alignment */
+}
+
+.datatable-body li:last-child {
+    border-bottom: none;
+}
+
+.datatable-body span {
+    flex: 1; /* Each cell takes equal width */
+    overflow: hidden; /* Hide overflow text */
+    text-overflow: ellipsis; /* Show ellipsis for overflow text */
+    white-space: nowrap; /* Prevent text from wrapping */
+    padding: 5px; /* Add some padding */
+}
+
+.row-item {
+    display: flex;              /* Use Flexbox for horizontal alignment */
+    align-items: center;        /* Vertically align items in the center */
+    margin-bottom: 0.5rem;      /* Optional: Adds spacing between rows */
+}
+
+.row-item lightning-icon {
+    margin-right: 0.5rem;       /* Adds space between the icon and the list item */
+}
+
+.custom-icon {
+    width: 90%; /* Adjust as necessary to fit within the box */
+    height: 90%; /* Adjust as necessary to fit within the box */
+    position: absolute; /* Overlays the image */
+}
+
+.icon-wrapper {
+    width: 30px; /* Standard icon size */
+    height: 30px; /* Standard icon size */
+    display: flex; /* Centering */
+    justify-content: center; /* Centering */
+    align-items: center; /* Centering */
+    border-radius: 4px; /* Optional: gives it rounded corners */
+    position: relative; /* For positioning */
+}
+
+li {
+    list-style-type: none;      /* Remove bullet points from <li> */
+    margin: 0;                  /* Remove default margin */
+    padding: 0;                 /* Remove default padding */
+}
+.icon-header {
+    width: 40px; /* Fixed width for the icon column */
+    text-align: center; /* Center the icon */
+}
+
