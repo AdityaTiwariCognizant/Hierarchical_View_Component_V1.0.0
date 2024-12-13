@@ -32,12 +32,20 @@
     border-bottom: none;
 }
 
-.datatable-body span {
+.datatable-body span,
+.datatable-header span {
     flex: 1; /* Each cell takes equal width */
     overflow: hidden; /* Hide overflow text */
     text-overflow: ellipsis; /* Show ellipsis for overflow text */
     white-space: nowrap; /* Prevent text from wrapping */
     padding: 5px; /* Add some padding */
+}
+
+.datatable-body .narrow-column,
+.datatable-header .narrow-column 
+ {
+    flex: 0 0 50px; /* Set a specific width for the first column (adjust as needed) */
+    width: 50px; /* Ensure the column is fixed width */
 }
 
 .row-item {
@@ -48,6 +56,10 @@
 
 .row-item lightning-icon {
     margin-right: 0.5rem;       /* Adds space between the icon and the list item */
+}
+
+.first-column{
+    width: 4rem;
 }
 
 .custom-icon {

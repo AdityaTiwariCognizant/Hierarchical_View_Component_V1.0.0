@@ -121,19 +121,9 @@
                                  
                                  
                                  <div key={item.value} class="slds-m-around_small">
-                                     <!-- <template if:false={selectedObjectId}>
-                                     <template if:true={childRecords}>
-                                         <lightning-datatable
-                                             data={childRecords}
-                                             columns={columns}
-                                             key-field="Id"
-                                             hide-checkbox-column
-                                             onrowaction={handleRowAction}>
-                                         </lightning-datatable>
-                                     </template>
-                                 </template> -->
-
-                                 <c-record-list-item-view recordid={recordId} parentobjectapiname={parentObjectApiName} onrecordselection={handleRecordSelection} onrecordcollapse={handleRecordCollapse} childobjectapiname={childApiName} ></c-record-list-item-view>
+                                   
+                                
+                                 <c-record-list-item-view recordid={recordId} parentobjectapiname={parentObjectApiName} onrecordselection={handleRecordSelection} recordcollapse={handleRecordCollapse} childobjectapiname={childApiName} ></c-record-list-item-view>
 
                                  
                                  </div>
