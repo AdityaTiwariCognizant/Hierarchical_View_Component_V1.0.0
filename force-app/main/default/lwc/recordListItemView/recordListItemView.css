@@ -24,7 +24,7 @@
 
 .datatable-body li {
     border-bottom: 1px solid #ddd;
-    padding: 10px;
+  
     display: flex; /* Use flexbox for better alignment */
 }
 
@@ -38,7 +38,7 @@
     overflow: hidden; /* Hide overflow text */
     text-overflow: ellipsis; /* Show ellipsis for overflow text */
     white-space: nowrap; /* Prevent text from wrapping */
-    padding: 5px; /* Add some padding */
+    padding: 2px; /* Add some padding */
 }
 
 .datatable-body .narrow-column,

@@ -1,4 +1,13 @@
 <template>
+
+    <template if:true={showNoDataCard}>
+        <lightning-card title="No Related Records" icon-name="utility:info">
+            <div class="slds-p-horizontal_medium">
+                <p>No related records exist for this object.</p>
+            </div>
+        </lightning-card>
+    </template>
+
     <template if:false={recordClicked}>
         <div class="datatable">
             <span class="datatable-header">
@@ -46,22 +55,29 @@
 
     <template if:true={recordClicked}>
         <div class="datatable">
-            <ul class="datatable-header">
-                <li class="icon-header"> </li>
-                <li>Id</li>
-                <li>Name</li>
-                <li>Email</li>
-            </ul>
-            <ul class="datatable-body">
-                <li>
-                    <span><button class="slds-button slds-button_icon slds-m-right_x-small" onclick={handleRecordCollapse}>
+            <span class="datatable-header">
+                <span class="narrow-column"> </span>
+                <!-- Render column headers dynamically -->
+                <template for:each={filteredDisplayObjectKeys} for:item="key">
+                    <span key={key} class="slds-align_absolute-center">{key}</span>
+                </template>
+            </span>
+            <div class="datatable-body slds-grid slds-grid_align-spread">
+                <span class="slds-col slds-size_1-of-13 narrow-column">
+                    <!-- Toggle button to collapse record details -->
+                    <button class="slds-button slds-button_icon slds-m-right_x-small" onclick={handleRecordCollapse}>
                         <lightning-icon icon-name="utility:chevrondown" alternative-text="Toggle" size="x-small"></lightning-icon>
-                    </button></span>
-                    <span>{selectedRecord.id}</span>
-                    <span>{selectedRecord.name}</span>
-                    <span>{selectedRecord.email}</span>
-                </li>
-            </ul>
+                    </button>
+                </span>
+                <template for:each={displayedSelectedRecordFields} for:item="field">
+                    <span key={field.fieldName} class="slds-col slds-size_3-of-13 slds-text-align_center">
+                        <!-- Display field value, or fallback if value is empty -->
+                        {field.value}
+                    </span>
+                </template>
+     
+              
+            </div>
             <c-related-object-main parentid={selectedRecord.id}></c-related-object-main>
         </div>
     </template>

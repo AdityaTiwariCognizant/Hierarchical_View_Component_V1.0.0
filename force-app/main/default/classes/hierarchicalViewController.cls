@@ -56,7 +56,7 @@ public with sharing class hierarchicalViewController {
                 ' WHERE ' + childObjectApiName + '.' + parentObjectApiName + 'Id = :recordId ';
 		}
 
-		soqlQuery = QueryValidator.removeInvalidFields(soqlQuery,childObjectApiName);
+		//soqlQuery = QueryValidator.removeInvalidFields(soqlQuery,childObjectApiName);
 		
         
         // Execute the query inside a try-catch to handle any query exceptions

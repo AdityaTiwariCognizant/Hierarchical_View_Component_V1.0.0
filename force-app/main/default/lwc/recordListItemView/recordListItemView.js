@@ -7,7 +7,7 @@ import { getRecord } from 'lightning/uiRecordApi';
 
 import {NavigationMixin} from 'lightning/navigation';
 
-const FIELD_CRITERIA = ['Name', 'Number', 'Type', 'Date','Status', 'Priority',  'Amount', 'Phone'];
+const FIELD_CRITERIA = [ 'Time','Title','Date','Account', 'Type', ,'Status', 'Priority',  'Amount', 'Phone'];
 
 export default class RecordListItemView extends NavigationMixin(LightningElement) {
 
@@ -33,10 +33,13 @@ export default class RecordListItemView extends NavigationMixin(LightningElement
 
     @track openedObjectRecordId;
 
+    @track showNoDataCard = false;
+
 
 @wire(getChildRecords,{recordId:'$recordid',parentObjectApiName:'$parentobjectapiname',childObjectApiName:'$childobjectapiname'})
     wiredChildRecord({error,data}){
         if(data){
+            if (Array.isArray(data) && data.length > 0) {
             this.childRecords = data;
             this.viewChildRecords = this.childRecords.slice(0,4)
             //console.log('Child records :'+JSON.stringify(data));
@@ -51,6 +54,13 @@ export default class RecordListItemView extends NavigationMixin(LightningElement
             console.log('### '+this.openedObjectRecordId);
 
             console.log('child Record structure $$$### '+JSON.stringify(this.childRecords));
+        }
+        else {
+            console.log('No related records found');
+            this.relatedRecords = [];
+            this.showNoDataCard = true;
+            this.recordClicked = false;
+        }
         }
         else if (error){
         console.error(error);
@@ -69,11 +79,11 @@ handleRecordSelection(event){
     this.selectedRecord = this.childRecords.find(record => record.id === clickedId);
     console.log('$$$ '+JSON.stringify(this.selectedRecord));
 
-    this.selectedRecordId = this.selectedRecord.id;
-
+    this.processSelectedRecordFields();
 
     const evt = new CustomEvent('recordselection', {
         detail: { id: event.currentTarget.dataset.id,
+            name : this.selectedRecord.name 
 
                   
          }
@@ -82,14 +92,31 @@ handleRecordSelection(event){
 
 
 }
+
+processSelectedRecordFields() {
+    if (this.selectedRecord) {
+        const selectedFields = {};
+
+        // Iterate over filteredDisplayObjectKeys and find corresponding data in selectedRecord
+        this.filteredDisplayObjectKeys.forEach(key => {
+            // Match the field name (key) in selectedRecord and store its value
+            const recordKey = key.toLowerCase(); // Convert key to lowercase to match the field names in selectedRecord
+            if (this.selectedRecord[recordKey]) {
+                selectedFields[key] = this.selectedRecord[recordKey]; // Add it to selectedFields
+            } else {
+                selectedFields[key] = '--'; // If not found, set a placeholder value
+            }
+        });
+
+        // Store the selected fields in selectedRecordFields
+        this.selectedRecordFields = selectedFields;
+    }
+}
+
 handleRecordCollapse(event){
     this.recordClicked=false;
-    this.selectedRecord = {
-        name:'',
-        id:'',
-        email:''
-
-    }
+    this.selectedRecord = null;
+    this.selectedRecordFields = {}; 
 
     const evt = new CustomEvent('recordcollapse', {
         detail: { id:'' }
@@ -181,14 +208,32 @@ filterAndModifyObject(inputObject) {
     Object.keys(inputObject).forEach((key) => {
         const value = inputObject[key];
 
-        // Always include keys that contain 'name' or 'number' in the key, regardless of displayValue
-        if (key.toLowerCase().includes('name') || key.toLowerCase().includes('number')) {
-            alwaysIncluded[key] = value;
-        } 
-        // For other keys, include them only if displayValue is not null
-        else if (value && value.displayValue !== null && value.displayValue !== '') {
+        // Check if the key matches any of the criteria in FIELD_CRITERIA (case insensitive match)
+        const matchesCriteria = FIELD_CRITERIA.some(criteria => 
+            key.toLowerCase().includes(criteria.toLowerCase())
+        );
+
+        // If the key matches any of the FIELD_CRITERIA criteria, include it in filteredObject
+        if (matchesCriteria && value && value.displayValue !== null && value.displayValue !== '') {
             filteredObject[key] = value;
         }
+
+        // Always include keys that contain 'name' or 'number' in the key, regardless of displayValue
+        else if (key.toLowerCase().includes('name') || key.toLowerCase().includes('number')) {
+            alwaysIncluded[key] = value;
+        }
+
+        // Handle accountid dynamically based on the presence of 'account' in the field name
+        
+
+        // Exclude the ownerid field explicitly
+        else if (key.toLowerCase().includes('ownerid')) {
+            // Don't add anything to filteredObject for ownerid
+        }
+        // For other fields, include them only if displayValue is not null
+         else if (value.value!=='') {
+             filteredObject[key] = value;
+         }
     });
 
     // Step 3: Combine alwaysIncluded with the rest of the filteredObject
@@ -228,6 +273,8 @@ get filteredDisplayObjectKeys() {
     return [...new Set(this.displayObjectKeys)].slice(0, 4); // Ensure unique keys and limit to 4
 }
 
+
+
 // New computed property to get all record values based on filtered keys
 displayRecordValues() {
     return this.viewChildRecords.map(record => {
@@ -242,7 +289,9 @@ displayRecordValues() {
 }
 
 get filteredDisplayObjectKeys() {
-    return [...new Set(this.displayObjectKeys)].slice(0, 4);
+    return [...new Set(this.displayObjectKeys)]
+    .filter(key => !key.toLowerCase().includes('account')) // Exclude any key with 'account'
+    .slice(0, 3); 
 }
 
 get filteredRecords() {
@@ -267,6 +316,13 @@ get filteredRecords() {
                 };
             })
         };
+    });
+}
+
+get displayedSelectedRecordFields() {
+    // Return an array of objects to be used in the template
+    return Object.keys(this.selectedRecordFields).map(key => {
+        return { key, value: this.selectedRecordFields[key] };
     });
 }
 

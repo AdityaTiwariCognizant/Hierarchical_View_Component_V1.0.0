@@ -144,6 +144,7 @@ export default class RelatedObjectMain extends LightningElement {
 
     expandClickedObject(event) {
         this.selectedRecordId = '';
+        this.selectedRecordName = '';
         this.modifyHeader = '';
         this.expandedView = true;  // Show the expanded view
 
@@ -201,9 +202,12 @@ export default class RelatedObjectMain extends LightningElement {
 
     handleRecordSelection(event){
         this.selectedRecordId = '';
+        this.selectedRecordName = '';
+
         this.modifyHeader = '';
 
         this.selectedRecordId = event.detail.id;
+        this.selectedRecordName = event.detail.name;
         console.log('SELECTED RECORD ID '+this.selectedRecordId);
         this.modifyHeader = 'slds-m-right_medium link-style';
 
@@ -212,6 +216,7 @@ export default class RelatedObjectMain extends LightningElement {
     handleRecordCollapse(event){
         console.log('Selected Record Collapsed');
         this.selectedRecordId = '';
+        this.selectedRecordName = '';
         this.modifyHeader = '';
         this.parentid='';
     }
@@ -227,13 +232,15 @@ export default class RelatedObjectMain extends LightningElement {
 
         this.relatedListOptions.forEach(item => {
             item.isVisible = false; // Toggle the boolean value
-            item.utility = 'utility:chevronright'
+            item.utility = 'utility:chevronright';
         });
 
         // Update the items to trigger reactivity
         this.relatedListOptions = [...this.relatedListOptions]; 
 
         this.selectedRecordId='';
+        this.selectedRecordName = '';
+
         this.modifyHeader = '';
         
        
