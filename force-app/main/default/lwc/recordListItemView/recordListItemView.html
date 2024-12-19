@@ -1,4 +1,8 @@
 <template>
+    
+    <template if:true={isLoading}>
+        <lightning-spinner alternative-text="Loading related object" variant="brand" size="medium"></lightning-spinner>
+    </template>
 
     <template if:true={showNoDataCard}>
         <lightning-card title="No Related Records" icon-name="utility:info">
@@ -46,9 +50,13 @@
             </ul>
 
             <template if:true={requireViewAll}>
-                <footer>
-                    <button class="slds-button slds-button_neutral slds-align_absolute-center" onclick={handleViewAll}>View All</button>
+                <footer class="slds-p-top_medium">
+                    
+                    <div class="slds-grid slds-grid_align-end">
+                    <button class="slds-button slds-button_neutral slds-m-right_medium" onclick={handleViewAll}>View All</button>
+                    </div>
                 </footer>
+              
             </template>
         </div>
     </template>
@@ -69,8 +77,9 @@
                         <lightning-icon icon-name="utility:chevrondown" alternative-text="Toggle" size="x-small"></lightning-icon>
                     </button>
                 </span>
+
                 <template for:each={displayedSelectedRecordFields} for:item="field">
-                    <span key={field.fieldName} class="slds-col slds-size_3-of-13 slds-text-align_center">
+                    <span key={field.fieldName} class="slds-col slds-size_3-of-13 slds-text-align_center slds-text-link" onclick={handleRecordNavigation} >
                         <!-- Display field value, or fallback if value is empty -->
                         {field.value}
                     </span>

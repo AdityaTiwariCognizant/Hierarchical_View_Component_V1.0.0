@@ -19,8 +19,8 @@ export default class RelatedObjectMain extends LightningElement {
     @track expandedView = false;
     @track childApiName;
     @track selectetObjectApiName;
-
     @track selectedObjectId;
+    @track isLoading = true;
 
     showHeader = true;
 
@@ -54,9 +54,13 @@ export default class RelatedObjectMain extends LightningElement {
             this.parentObjectApiName = data.apiName; // This is the line to extract the objectApiName
             console.log('Record Id:'+this.recordId);
             console.log('ALL DATA :'+JSON.stringify(data));
+            setTimeout(() => {
+                this.isLoading = false;
+            }, 200);
         } else if (error) {
             console.error('Error fetching record:', error);
         }
+        
     }
 
     @wire(getObjectInfo, { recordId: '$recordId' })
@@ -82,58 +86,41 @@ export default class RelatedObjectMain extends LightningElement {
             console.error('Error fetching parent object info:', error);
         }
     }
-
-    columns = [
-        { 
-            label: 'Record ID',
-            fieldName: 'id',
-            type: 'button', // Make the ID field clickable
-            typeAttributes: {
-                label: { fieldName: 'id' },  // Display the 'id' value as a label on the button
-                name: 'id_click', // Custom name for the action
-                variant: 'base' // You can change the button style (e.g., 'neutral', 'brand')
-            }
-        },
-        { label: 'Name', fieldName: 'name' },
-        { label: 'Email', fieldName: 'email' },
-        
-        
-    ];
-
    
     handleRowAction(event){
-        const actionName = event.detail.action.name; // Get the action name
+        const actionName = event.detail.action.name;
 
         if (actionName === 'id_click') {
-            const rowData = event.detail.row; // Get row data
-            this.selectedObjectId = rowData.id; // Capture the record ID
-            this.selectedObjectName = rowData.name; // Capture the record Name
+            const rowData = event.detail.row; 
+            this.selectedObjectId = rowData.id; 
+            this.selectedObjectName = rowData.name; 
             console.log('Selected Object ID:', this.selectedObjectId); 
             console.log('Selected Object Name:', this.selectedObjectName); 
             
 
         }
-        fields 
     
     }
 
     @wire(getRelatedListsInfo, { parentObjectApiName: '$parentObjectApiName',recordTypeId: "012000000000000AAA" })
     wiredRelatedLists({ error, data }) {
         if (data) {
-            //console.log('Related Lists Data:', data);
-            this.relatedLists = data.relatedLists; // Store the related lists data
+            
+            this.relatedLists = data.relatedLists; 
             console.log('Related List :'+JSON.stringify(this.relatedLists));
         
 
             this.relatedListOptions = this.relatedLists.map(item => ({
                 label: item.entityLabel,
-                value: item.entityLabel, // Use entityLabel as the value
+                apiName: item.objectApiName,
+                value: item.entityLabel, 
                 iconUrl: item.themeInfo.iconUrl,
                 color: '#'+item.themeInfo.color,
                 isVisible:false,
                 utility:'utility:chevronright'
             }));
-            //console.log('Related list options :'+JSON.stringify(this.relatedListOptions));
+            console.log(' ### ALL ACCESS :'+JSON.stringify(this.relatedListOptions));
+     
 
         } else if (error) {
             console.error('Error fetching related lists:', error);
@@ -146,37 +133,37 @@ export default class RelatedObjectMain extends LightningElement {
         this.selectedRecordId = '';
         this.selectedRecordName = '';
         this.modifyHeader = '';
-        this.expandedView = true;  // Show the expanded view
+        this.expandedView = true;  
+
+        
 
         //reset all list items first
         this.relatedListOptions.forEach(item => {
-            item.isVisible = false; // Toggle the boolean value
-            item.utility = 'utility:chevronright'
+            item.isVisible = false;
+            item.utility = 'utility:chevronright';
+          
         });
 
         // Access the data-id attribute to get the clicked item's value
-        const selectedValue = event.target.dataset.id;  // Get the value from the clicked element's data-id
-        this.selectedObject = this.relatedListOptions.find(item => item.value === selectedValue).label; // Find the object by value
+        const selectedValue = event.target.dataset.id;  
+        this.selectedObject = this.relatedListOptions.find(item => item.value === selectedValue).apiName; // Find the object by value
+        this.childObjName = this.relatedListOptions.find(item => item.value === selectedValue).label;
         this.childApiName = String(this.selectedObject);
 
-        if(this.childApiName.includes(' ') && !this.childApiName.includes(',') && !this.childApiName.includes(':') ){
-            this.childApiName = this.childApiName.split(' ').join('_')+'__c';
-        }
+        
 
-        // Log the selected object to the console
+       
         const item = this.relatedListOptions.find(item=>item.value === selectedValue);
         if(item){
             item.isVisible = !item.isVisible;
             item.utility = 'utility:chevrondown'
             this.relatedListOptions = [...this.relatedListOptions]
-
-
+            
         }
 
        // console.log('%%%%% '+JSON.stringify(this.relatedListOptions));
     }
 
-    //Fetch 1-degree-child Object Info
     @wire(getObjectInfo, { objectApiName: '$childApiName' })
     childObjectInfo({ error, data }) {
         if (data) {
@@ -187,6 +174,8 @@ export default class RelatedObjectMain extends LightningElement {
             // console.log('Child Api Name: '+this.childApiName);
         } else if (error) {
             console.error('Error fetching child object info:', error);
+            this.childIcon = '';
+
         }
     }
     
@@ -244,10 +233,6 @@ export default class RelatedObjectMain extends LightningElement {
         this.modifyHeader = '';
         
        
-    }
-
-    get showChevron() {
-        return true;  // Only show chevron if related records exist
     }
 
     

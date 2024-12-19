@@ -1,7 +1,6 @@
 import { LightningElement,wire,api,track } from 'lwc';
 import getChildRecords from '@salesforce/apex/hierarchicalViewController.getRelatedChildRecords';
 import { getRelatedListsInfo } from "lightning/uiRelatedListApi";
-import { getObjectInfo } from 'lightning/uiObjectInfoApi';
 import { getRecord } from 'lightning/uiRecordApi';
 
 
@@ -12,7 +11,7 @@ const FIELD_CRITERIA = [ 'Time','Title','Date','Account', 'Type', ,'Status', 'Pr
 export default class RecordListItemView extends NavigationMixin(LightningElement) {
 
     @api recordid; 
-    
+    @api flexipageRegionWidth;
     @api parentobjectapiname;
     @api childobjectapiname;
     @track childRecords=[];
@@ -34,6 +33,9 @@ export default class RecordListItemView extends NavigationMixin(LightningElement
     @track openedObjectRecordId;
 
     @track showNoDataCard = false;
+
+    @track isLoading = true;
+
 
 
 @wire(getChildRecords,{recordId:'$recordid',parentObjectApiName:'$parentobjectapiname',childObjectApiName:'$childobjectapiname'})
@@ -61,11 +63,15 @@ export default class RecordListItemView extends NavigationMixin(LightningElement
             this.showNoDataCard = true;
             this.recordClicked = false;
         }
+        setTimeout(() => {
+            this.isLoading = false;
+        }, 400);
         }
         else if (error){
         console.error(error);
         console.log(error);
     }
+
 }
 
 handleRecordSelection(event){
@@ -75,7 +81,7 @@ handleRecordSelection(event){
     this.recordClicked=true;
     const clickedId = event.currentTarget.dataset.id; // Extract ID from data attribute
     console.log('Clicked ID:', clickedId);
-
+    this.selectedRecordId = clickedId;
     this.selectedRecord = this.childRecords.find(record => record.id === clickedId);
     console.log('$$$ '+JSON.stringify(this.selectedRecord));
 
@@ -113,13 +119,26 @@ processSelectedRecordFields() {
     }
 }
 
+handleRecordNavigation(event) {
+    const clickedRecordId = event.currentTarget.dataset.id;
+
+    this[NavigationMixin.Navigate]({
+        type: 'standard__recordPage',
+        attributes: {
+            recordId: this.selectedRecordId,  // The record ID to navigate to
+            objectApiName: this.selectedRecord.name,  // The object API name (e.g., 'Account', 'Contact')
+            actionName: 'view'  // Use 'view' to view the record page
+        }
+    });
+}
+
 handleRecordCollapse(event){
     this.recordClicked=false;
     this.selectedRecord = null;
     this.selectedRecordFields = {}; 
 
     const evt = new CustomEvent('recordcollapse', {
-        detail: { id:'' }
+        detail: { id:'', name :'' }
     });
     this.dispatchEvent(evt);
 }
@@ -270,7 +289,8 @@ getUniqueRecords(records) {
 }
 
 get filteredDisplayObjectKeys() {
-    return [...new Set(this.displayObjectKeys)].slice(0, 4); // Ensure unique keys and limit to 4
+    return [...new Set(this.displayObjectKeys)].slice(0, 4);// Ensure unique keys and limit to 4
+    
 }
 
 

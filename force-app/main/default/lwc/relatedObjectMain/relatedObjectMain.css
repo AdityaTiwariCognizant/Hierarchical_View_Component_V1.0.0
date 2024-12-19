@@ -1,64 +1,59 @@
+
+
+
 .icon-wrapper {
-    width: 30px; /* Standard icon size */
-    height: 30px; /* Standard icon size */
-    display: flex; /* Centering */
-    justify-content: center; /* Centering */
-    align-items: center; /* Centering */
-    border-radius: 4px; /* Optional: gives it rounded corners */
-    position: relative; /* For positioning */
+    width: 30px; 
+    height: 30px; 
+    display: flex;
+    justify-content: center; 
+    align-items: center; 
+    border-radius: 4px; 
+    position: relative; 
 }
 
 .custom-icon {
-    width: 90%; /* Adjust as necessary to fit within the box */
-    height: 90%; /* Adjust as necessary to fit within the box */
-    position: absolute; /* Overlays the image */
+    width: 90%; 
+    height: 90%; 
+    position: absolute; 
 }
 
 .custom-card-border {
-    border: 1px solid #d8dde6; /* Light gray border */
-    border-radius: 0.25rem; /* Slightly rounded corners */
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
-    /*padding: 0.5rem;*/ /* Space between border and content */
-    /*margin: 1rem;*/ /* Space around the card */
-    box-sizing: border-box; /* Include padding and border in total width/height */
+    border: 1px solid #d8dde6; 
+    border-radius: 0.25rem; 
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); 
+    box-sizing: border-box; 
 }
 
 
 .row-item {
-    display: flex;              /* Use Flexbox for horizontal alignment */
-    align-items: center;        /* Vertically align items in the center */
-    margin-bottom: 0.5rem;      /* Optional: Adds spacing between rows */
+    display: flex;             
+    align-items: center;       
+    margin-bottom: 0.5rem;     
 }
 
 .row-item lightning-icon {
-    margin-right: 0.5rem;       /* Adds space between the icon and the list item */
+    margin-right: 0.5rem;      
 }
 
 li {
-    list-style-type: none;      /* Remove bullet points from <li> */
-    margin: 0;                  /* Remove default margin */
-    padding: 0;                 /* Remove default padding */
+    list-style-type: none;      
+                
 }
 
 .header-box {
-    background-color: #f2f2f3; /* Light grey background */
-    border-top: 1px solid #d8d8d8; /* Light border around the header */
+    background-color: #f2f2f3;
+    border-top: 1px solid #d8d8d8; 
     border-bottom: 1px solid #d8d8d8;
-    /*border-radius: 4px 4px 4px 4px;*/ /* Rounded corners at the top */
-    padding: 10px; /* Add some padding inside the box */
-    margin-bottom: 10px; /* Space between the header box and the rest of the card */
+    
+    padding: 10px; 
+    margin-bottom: 10px;
     
 }
 
 
-.link-style {
-    color: #0070d2; /* Dark blue color similar to Salesforce links */
-    text-decoration: underline; /* Underline the text */
-    cursor: pointer; /* Change cursor to pointer to indicate it's clickable */
+ .link-style {
+    color: #0070d2; 
+    text-decoration: underline; 
+    cursor: pointer; 
 }
-
-.link-style:hover {
-    color: #005fb2; /* Darker blue on hover for better UX */
-}
-
 

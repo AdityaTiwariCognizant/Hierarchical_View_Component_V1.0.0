@@ -1,10 +1,13 @@
 <template>
+    <template if:true={isLoading}>
+        <lightning-spinner alternative-text="Loading data" variant="brand" size="medium"></lightning-spinner>
+    </template>
+
     <div class="slds-card__body slds-card__body_inner custom-card-border">
         <lightning-card>
 
             <div>
                 <template if:true={showHeader}>
-                    <!-- Wrap header with an additional div to give it the boxed effect -->
                     <div class="header-box">
                         <header class="slds-media slds-media_center slds-has-flexi-truncate">
                             <div class="slds-media__figure">
@@ -12,7 +15,7 @@
                                     <div class="icon-wrapper" style={iconParentStyle}>
                                         <template if:false={parentIcon}>
                                             <lightning-icon icon-name="standard:default" alternative-text="Default Icon"
-                                                size="small"></lightning-icon>
+                                                size="medium"></lightning-icon>
                                         </template>
                                         <template lwc:if={parentIcon}>
                                             <img src={parentIcon} class="custom-icon" />
@@ -39,8 +42,6 @@
                     <div>
                         <ul class="slds-p-left_small">
                             <template for:each={relatedListOptions} for:item="item">
-                                <!-- Add the data-id attribute here to pass the value of the item -->
-
                                 <template if:false={item.isVisible}>
                                     <div key={item.value} class="row-item">
 
@@ -73,8 +74,6 @@
                                             {item.label}
                                         </li>
 
-
-
                                     </div>
                                 </template>
 
@@ -90,7 +89,7 @@
                                             </button>
 
                                             <div class="slds-media__figure">
-                                                <span class="slds-icon_container " title={childApiName}>
+                                                <span class="slds-icon_container " title={childObjName}>
                                                     <div class="icon-wrapper">
                                                         <template if:false={childIcon}>
                                                             <lightning-icon icon-name="standard:default"
@@ -114,9 +113,9 @@
                                                 <div class="slds-media__body">
                                                     <h2 class="slds-card__header-title">
                                                         <a href="#" class="slds-card__header-link slds-truncate"
-                                                            title={childApiName}>
+                                                            title={childObjName}>
                                                             <span
-                                                                class={modifyHeader}>{selectedRecordName}</span><span>{childApiName}</span>
+                                                                class={modifyHeader}>{selectedRecordName}</span><span>{childObjName}</span>
                                                         </a>
                                                     </h2>
                                                 </div>
@@ -125,7 +124,7 @@
                                                 <div class="slds-media__body">
                                                     <h2 class="slds-card__header-title">
                                                         <span class="slds-p-right_medium">{selectedObjectId}</span>
-                                                        <span class="slds-p-left_medium">{childApiName}</span>
+                                                        <span class="slds-p-left_medium">{childObjName}</span>
                                                     </h2>
                                                 </div>
                                             </template>
@@ -139,7 +138,7 @@
                                         <c-record-list-item-view recordid={recordId}
                                             parentobjectapiname={parentObjectApiName}
                                             onrecordselection={handleRecordSelection}
-                                            recordcollapse={handleRecordCollapse}
+                                            onrecordcollapse={handleRecordCollapse}
                                             childobjectapiname={childApiName}
                                             ></c-record-list-item-view>
 
@@ -152,11 +151,7 @@
 
                         </ul>
 
-
-
-
                     </div>
-
 
                 </lightning-card>
             </div>

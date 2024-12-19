@@ -1,31 +1,34 @@
+
+/* For data table */
+
 .datatable {
     border: 1px solid #ddd;
     border-radius: 5px;
     padding: 10px;
-    width: 100%; /* Make the datatable responsive */
+    width: 100%; 
 }
 
 .datatable-header {
     background-color: #f0f0f0;
     font-weight: bold;
     padding: 10px;
-    display: flex; /* Use flexbox for better alignment */
+    display: flex; 
 }
 
 .datatable-header li {
-    flex: 1; /* Each header item takes equal width */
-    text-align: left; /* Align text to the left */
-    padding: 5px; /* Add some padding */
+    flex: 1; 
+    text-align: left; 
+    padding: 5px; 
 }
 
 .datatable-body {
-    padding: 10px;
+   padding-top: .5rem;
 }
 
 .datatable-body li {
     border-bottom: 1px solid #ddd;
   
-    display: flex; /* Use flexbox for better alignment */
+    display: flex; 
 }
 
 .datatable-body li:last-child {
@@ -34,57 +37,60 @@
 
 .datatable-body span,
 .datatable-header span {
-    flex: 1; /* Each cell takes equal width */
-    overflow: hidden; /* Hide overflow text */
-    text-overflow: ellipsis; /* Show ellipsis for overflow text */
-    white-space: nowrap; /* Prevent text from wrapping */
-    padding: 2px; /* Add some padding */
+    flex: 1; 
+    overflow: hidden;
+    text-overflow: ellipsis; 
+    white-space: nowrap; 
+    padding: 2px; 
 }
 
 .datatable-body .narrow-column,
 .datatable-header .narrow-column 
  {
-    flex: 0 0 50px; /* Set a specific width for the first column (adjust as needed) */
-    width: 50px; /* Ensure the column is fixed width */
+    flex: 0 0 50px;  
+    width: 50px; 
 }
 
+/* Row styling */
+
 .row-item {
-    display: flex;              /* Use Flexbox for horizontal alignment */
-    align-items: center;        /* Vertically align items in the center */
-    margin-bottom: 0.5rem;      /* Optional: Adds spacing between rows */
+    display: flex;              
+    align-items: center;       
 }
 
 .row-item lightning-icon {
-    margin-right: 0.5rem;       /* Adds space between the icon and the list item */
+    margin-right: 0.5rem;      
 }
 
 .first-column{
     width: 4rem;
 }
 
+/* icon styling */
+
 .custom-icon {
-    width: 90%; /* Adjust as necessary to fit within the box */
-    height: 90%; /* Adjust as necessary to fit within the box */
-    position: absolute; /* Overlays the image */
+    width: 90%; 
+    height: 90%; 
+    position: absolute; 
 }
 
 .icon-wrapper {
-    width: 30px; /* Standard icon size */
-    height: 30px; /* Standard icon size */
-    display: flex; /* Centering */
-    justify-content: center; /* Centering */
-    align-items: center; /* Centering */
-    border-radius: 4px; /* Optional: gives it rounded corners */
-    position: relative; /* For positioning */
+    width: 30px; 
+    height: 30px; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    border-radius: 4px; 
+    /* position: relative;  */
 }
 
 li {
-    list-style-type: none;      /* Remove bullet points from <li> */
-    margin: 0;                  /* Remove default margin */
-    padding: 0;                 /* Remove default padding */
+    list-style-type: none;     
+    margin: 0;                 
+    padding: 0;                 
 }
 .icon-header {
-    width: 40px; /* Fixed width for the icon column */
-    text-align: center; /* Center the icon */
+    width: 40px;
+    text-align: center; 
 }
 
