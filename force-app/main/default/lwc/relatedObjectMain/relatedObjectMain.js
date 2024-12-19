@@ -86,6 +86,7 @@ export default class RelatedObjectMain extends LightningElement {
             console.error('Error fetching parent object info:', error);
         }
     }
+
    
     handleRowAction(event){
         const actionName = event.detail.action.name;
@@ -99,6 +100,7 @@ export default class RelatedObjectMain extends LightningElement {
             
 
         }
+    
     
     }
 
@@ -235,5 +237,8 @@ export default class RelatedObjectMain extends LightningElement {
        
     }
 
+    get showChevron() {
+        return true; 
+    }
     
 }

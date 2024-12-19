@@ -56,10 +56,7 @@ public with sharing class hierarchicalViewController {
                 ' WHERE ' + childObjectApiName + '.' + parentObjectApiName + 'Id = :recordId ';
 		}
 
-		//soqlQuery = QueryValidator.removeInvalidFields(soqlQuery,childObjectApiName);
 		
-        
-        // Execute the query inside a try-catch to handle any query exceptions
         List<SObject> childRecords = new List<SObject>();
         try {
             childRecords = Database.query(soqlQuery);
@@ -82,11 +79,7 @@ public with sharing class hierarchicalViewController {
         System.debug('5 Error :'+e.getMessage());
       //throw e;
   } 
-       // catch (Exception e) {
-        // General catch for any other unforeseen errors
-       //  System.debug(' Error 6 :'+e.getMessage());
-      //  throw new AuraHandledException('An unexpected error occurred: ' + e.getMessage());
-   // }
+       
     
     System.debug('Resulting Records :'+result);
     return result;
