@@ -2,11 +2,9 @@ import { LightningElement,wire,api,track } from 'lwc';
 import getChildRecords from '@salesforce/apex/hierarchicalViewController.getRelatedChildRecords';
 import { getRelatedListsInfo } from "lightning/uiRelatedListApi";
 import { getRecord } from 'lightning/uiRecordApi';
-
-
 import {NavigationMixin} from 'lightning/navigation';
 
-const FIELD_CRITERIA = [ 'Time','Title','Date','Account', 'Type', ,'Status', 'Priority',  'Amount', 'Phone'];
+const FIELD_CRITERIA = ['Time','Title','Date','Account','Type','Status','Priority', 'Amount','Phone'];
 
 export default class RecordListItemView extends NavigationMixin(LightningElement) {
 
@@ -14,50 +12,49 @@ export default class RecordListItemView extends NavigationMixin(LightningElement
     @api flexipageRegionWidth;
     @api parentobjectapiname;
     @api childobjectapiname;
-    @track childRecords=[];
-    @track viewChildRecords = [];
-    relatedLists;
-    @track relatedListOptions;
-    recordClicked = false;
-
-    selectedRecordId;
-
-    @track filteredFields = [];
-
-    @track requireViewAll=false;
-
-    @track displayObject;
-
-    @track displayObjectKeys = [];
-
+    
+    @track childRecords = [];
+    @track viewableChildRecords = [];
+    @track relatedListsObjectAttributes;
+    @track toDisplayFieldNames = [];
     @track openedObjectRecordId;
 
-    @track showNoDataCard = false;
+    relatedListsSummary;
+    selectedRecordId;
 
-    @track isLoading = true;
+    recordClicked = false;
+    requireViewAll = false;
+    showNoDataCard = false;
+    isLoading = true;
 
 
+    /*Method : Apex wired method to fetch related records to the object
+               whoes recordId is being passed as parameter
+         @param recordId :  recordId of current object whose related records
+                            are needed to be displayed
+         @param parentObjectApiName : objectApiName of the current object
+         @param childObjectApiName : objectApiName of the related (opened) object
+    */
 
 @wire(getChildRecords,{recordId:'$recordid',parentObjectApiName:'$parentobjectapiname',childObjectApiName:'$childobjectapiname'})
     wiredChildRecord({error,data}){
-        if(data){
+        if(data) {
             if (Array.isArray(data) && data.length > 0) {
             this.childRecords = data;
-            this.viewChildRecords = this.childRecords.slice(0,4)
-            //console.log('Child records :'+JSON.stringify(data));
-            // console.log('**Parent Api Name '+this.parentobjectapiname);
-            // console.log('**Parent recordId '+this.recordid);
-            // console.log('**Child Api Name '+this.childobjectapiname);
-            if(this.childRecords.length>4){
+            //for compactness we will display only 4 records on ui
+            this.viewableChildRecords = this.childRecords.slice(0,4);
+        
+            //providing a button to view all records if no. of records > 4
+            if(this.childRecords.length > 4) {
                 this.requireViewAll = true
             }
-
-            this.openedObjectRecordId = this.viewChildRecords[0].id;
-            console.log('### '+this.openedObjectRecordId);
-
-            console.log('child Record structure $$$### '+JSON.stringify(this.childRecords));
+            //picking up the record id of a record to get object metadata 
+            // for preparing datatable display fields - any record will do
+            this.openedObjectRecordId = this.viewableChildRecords[0].id;
+            
         }
         else {
+            //handling empty data for child records
             console.log('No related records found');
             this.relatedRecords = [];
             this.showNoDataCard = true;
@@ -67,42 +64,40 @@ export default class RecordListItemView extends NavigationMixin(LightningElement
             this.isLoading = false;
         }, 400);
         }
-        else if (error){
+        else if (error) {
         console.error(error);
         console.log(error);
     }
 
 }
 
-handleRecordSelection(event){
+// Event handler for selection of particular related record
+handleRecordSelection(event) {
 
-    
-
-    this.recordClicked=true;
+    this.recordClicked = true;
     const clickedId = event.currentTarget.dataset.id; // Extract ID from data attribute
     console.log('Clicked ID:', clickedId);
     this.selectedRecordId = clickedId;
     this.selectedRecord = this.childRecords.find(record => record.id === clickedId);
-    console.log('$$$ '+JSON.stringify(this.selectedRecord));
+    console.log('$$$ ' + JSON.stringify(this.selectedRecord));
 
     this.processSelectedRecordFields();
 
     const evt = new CustomEvent('recordselection', {
         detail: { id: event.currentTarget.dataset.id,
             name : this.selectedRecord.name 
-
-                  
          }
     });
     this.dispatchEvent(evt);
 
-
 }
 
+
+
+// processing the fields of record selected on ui to show in expanded view
 processSelectedRecordFields() {
     if (this.selectedRecord) {
         const selectedFields = {};
-
         // Iterate over filteredDisplayObjectKeys and find corresponding data in selectedRecord
         this.filteredDisplayObjectKeys.forEach(key => {
             // Match the field name (key) in selectedRecord and store its value
@@ -119,6 +114,8 @@ processSelectedRecordFields() {
     }
 }
 
+// while in the expanded view the whenever user click the record 
+// ui will navigate to that record's record page
 handleRecordNavigation(event) {
     const clickedRecordId = event.currentTarget.dataset.id;
 
@@ -132,68 +129,89 @@ handleRecordNavigation(event) {
     });
 }
 
-handleRecordCollapse(event){
-    this.recordClicked=false;
+// Event handler for action of collapsing an opened related record
+handleRecordCollapse(event) {
+
+    this.recordClicked = false;
     this.selectedRecord = null;
     this.selectedRecordFields = {}; 
 
     const evt = new CustomEvent('recordcollapse', {
-        detail: { id:'', name :'' }
+        detail: { id : '', name : '' }
     });
     this.dispatchEvent(evt);
+
 }
 
+/*Method : Salesforce standard UI wired method to fetch list of object
+           and their attributes related to the supplied objectApiName
+        
+         @param parentObjectApiName : objectApiName of the opened related object
+    */
 @wire(getRelatedListsInfo, { parentObjectApiName: '$childobjectapiname'})
 wiredRelatedLists({ error, data }) {
     if (data) {
         //console.log('Related Lists Data:', data);
-        this.relatedLists = data.relatedLists; // Store the related lists data
-        //console.log('Related List :'+this.relatedLists);
+        this.relatedListsSummary = data.relatedLists; // Store the related lists data
+        //console.log('Related List :'+this.relatedListsSummary);
     
 
-        this.relatedListOptions = this.relatedLists.map(item => ({
-            label: item.entityLabel,
-            value: item.entityLabel, // Use entityLabel as the value
-            iconUrl: item.themeInfo.iconUrl,
-            color: '#'+item.themeInfo.color,
-            isVisible:false
+        this.relatedListsObjectAttributrs = this.relatedListsSummary.map(item => ({
+            label : item.entityLabel,
+            value : item.entityLabel, // Use entityLabel as the value
+            iconUrl : item.themeInfo.iconUrl,
+            color : '#' + item.themeInfo.color,
+            isVisible : false
         }));
-        // console.log('Related list options :'+JSON.stringify(this.relatedListOptions));
+        // console.log('Related list object attributes :'+JSON.stringify(this.relatedListsObjectAttributes));
 
-    } else if (error) {
+    } 
+    else if (error) {
         console.error('Error fetching related lists:', error);
     }
+
 }
 
-findRelationShipName(childObjApiName){
+// Creating relationship keyword for both Standard & Custom Objects
+findRelationShipName(childObjApiName) {
+
     const postfix = childObjApiName.slice(-2)
-    if(postfix == '_c'){
-        console.log('Child Relationship name :'+childObjApiName+'__r');
-        return childObjApiName+'__r';
+    if(postfix == '_c') {
+        console.log('Child Relationship name :' + childObjApiName + '__r');
+        return childObjApiName + '__r';
     }
-    else{
-        console.log('Child Relationship name :'+childObjApiName+'s');
-        return childObjApiName+'s';
+    else {
+        console.log('Child Relationship name :' + childObjApiName + 's');
+        return childObjApiName + 's';
     }
 }
 
-handleViewAll(evt){
-    console.log('recordid '+this.recordid);
-    console.log('parent object api name '+this.parentobjectapiname);
-    console.log('relationship name '+this.findRelationShipName(this.childobjectapiname));
+// Event handler to view all button : will navigate ui to all related record list
+handleViewAll(evt) {
+
+    console.log('recordid ' + this.recordid);
+    console.log('parent object api name ' + this.parentobjectapiname);
+    console.log('relationship name ' + this.findRelationShipName(this.childobjectapiname));
 
     this[NavigationMixin.Navigate]({
-        type: 'standard__recordRelationshipPage',
-        attributes: {
-            recordId: this.recordid,  // The parent record ID
-            objectApiName:this.parentobjectapiname,
-            relationshipApiName: this.findRelationShipName(this.childobjectapiname),  // The dynamic relationship name
-            actionName: 'view'  // View the related list
+        type : 'standard__recordRelationshipPage',
+        attributes : {
+            recordId : this.recordid,  // The parent record ID
+            objectApiName : this.parentobjectapiname,
+            relationshipApiName : this.findRelationShipName(this.childobjectapiname),  // The dynamic relationship name
+            actionName : 'view'  // View the related list
         }
         
     });
  
 }
+
+/*Method : Standard Salesforce lightning method to fetch metadata of an object
+               whoes recordId is being passed as parameter
+         @param recordId :  recordId of current object whose related fields
+                            are neededs to be processed and displayed on UI
+        
+    */
 
 @wire(getRecord, { recordId: '$openedObjectRecordId', layoutTypes: ['Compact'] })
 wiredRecord({ error, data }) {
@@ -201,15 +219,14 @@ wiredRecord({ error, data }) {
         this.recordData = data.fields; // Get field data
         //console.log('DATA FIELDS '+JSON.stringify(this.recordData));
 
-        console.log('DISPLAY FIELDS '+JSON.stringify(this.filterAndModifyObject(this.recordData)));
+        console.log('DISPLAY FIELDS ' + JSON.stringify(this.filterAndModifyObject(this.recordData)));
         this.displayObject = this.filterAndModifyObject(this.recordData);
 
-        this.displayObjectKeys = Object.keys(this.displayObject).filter(key => {
+        this.toDisplayFieldNames = Object.keys(this.displayObject).filter(key => {
             // Only keep the fields that have 'displayValue' and 'value' properties
-            return this.displayObject[key]?.displayValue !== undefined && this.displayObject[key]?.value !== undefined;
+            return this.displayObject[key]?.displayValue !== undefined && this.displayObject[key] ?. value !== undefined;
         });
-        console.log('DISPLAY OBJ KEYS '+JSON.stringify(this.displayObjectKeys));
-
+        console.log('DISPLAY OBJ KEYS ' + JSON.stringify(this.toDisplayFieldNames));
 
     } else if (error) { 
         console.error('Error retrieving record:', error);
@@ -220,8 +237,8 @@ wiredRecord({ error, data }) {
 
 filterAndModifyObject(inputObject) {
     // Step 1: Separate keys with 'name' or 'number' and those that don't
-    let alwaysIncluded = {};
-    let filteredObject = {};
+    let alwaysIncludedFields = {};
+    let filteredFields = {};
 
     // Step 2: Separate keys based on whether they contain 'name' or 'number'
     Object.keys(inputObject).forEach((key) => {
@@ -232,14 +249,14 @@ filterAndModifyObject(inputObject) {
             key.toLowerCase().includes(criteria.toLowerCase())
         );
 
-        // If the key matches any of the FIELD_CRITERIA criteria, include it in filteredObject
+        // If the key matches any of the FIELD_CRITERIA criteria, include it in filteredFields
         if (matchesCriteria && value && value.displayValue !== null && value.displayValue !== '') {
-            filteredObject[key] = value;
+            filteredFields[key] = value;
         }
 
         // Always include keys that contain 'name' or 'number' in the key, regardless of displayValue
         else if (key.toLowerCase().includes('name') || key.toLowerCase().includes('number')) {
-            alwaysIncluded[key] = value;
+            alwaysIncludedFields[key] = value;
         }
 
         // Handle accountid dynamically based on the presence of 'account' in the field name
@@ -247,22 +264,22 @@ filterAndModifyObject(inputObject) {
 
         // Exclude the ownerid field explicitly
         else if (key.toLowerCase().includes('ownerid')) {
-            // Don't add anything to filteredObject for ownerid
+            // Don't add anything to filteredFields for ownerid
         }
         // For other fields, include them only if displayValue is not null
-         else if (value.value!=='') {
-             filteredObject[key] = value;
+         else if (value.value !== '') {
+             filteredFields[key] = value;
          }
     });
 
-    // Step 3: Combine alwaysIncluded with the rest of the filteredObject
-    const displayObject = { ...alwaysIncluded, ...filteredObject };
+    // Step 3: Combine alwaysIncludedFields with the rest of the filteredFields
+    const toDisplayFields = { ...alwaysIncludedFields, ...filteredFields };
 
     // Step 4: Sort the keys by the size of their value's displayValue (if present), else by the size of the value field
-    const sortedKeys = Object.keys(displayObject)
+    const sortedKeys = Object.keys(toDisplayFields)
         .sort((a, b) => {
-            const valueA = displayObject[a];
-            const valueB = displayObject[b];
+            const valueA = toDisplayFields[a];
+            const valueB = toDisplayFields[b];
 
             // Length of the displayValue or the value if displayValue is null
             const lengthA = valueA.displayValue ? valueA.displayValue.length : (valueA.value ? valueA.value.toString().length : 0);
@@ -271,7 +288,7 @@ filterAndModifyObject(inputObject) {
             return lengthA - lengthB;  // Sort by increasing length
         });
 
-    return displayObject;
+    return toDisplayFields;
 }
 
 getUniqueRecords(records) {
@@ -289,7 +306,7 @@ getUniqueRecords(records) {
 }
 
 get filteredDisplayObjectKeys() {
-    return [...new Set(this.displayObjectKeys)].slice(0, 4);// Ensure unique keys and limit to 4
+    return [...new Set(this.toDisplayFieldNames)].slice(0, 4);// Ensure unique keys and limit to 4
     
 }
 
@@ -297,42 +314,42 @@ get filteredDisplayObjectKeys() {
 
 // New computed property to get all record values based on filtered keys
 displayRecordValues() {
-    return this.viewChildRecords.map(record => {
+    return this.viewableChildRecords.map(record => {
         return this.filteredDisplayObjectKeys.map(key => {
             const propertyKey = key.toLowerCase(); // Convert to lowercase
             return {
                 key: key,
-                value: this.viewChildRecords[propertyKey] || '' // Access the property dynamically
+                value: this.viewableChildRecords[propertyKey] || '' // Access the property dynamically
             };
         });
     });
 }
 
 get filteredDisplayObjectKeys() {
-    return [...new Set(this.displayObjectKeys)]
+    return [...new Set(this.toDisplayFieldNames)]
     .filter(key => !key.toLowerCase().includes('account')) // Exclude any key with 'account'
     .slice(0, 3); 
 }
 
 get filteredRecords() {
-    return this.viewChildRecords.map(record => {
+    return this.viewableChildRecords.map(record => {
         return this.filteredDisplayObjectKeys.map(key => {
             return {
-                key: key,
-                value: record[key.toLowerCase()] || '' // Dynamically access record properties
+                key : key,
+                value : record[key.toLowerCase()] || '' // Dynamically access record properties
             };
         });
     });
 }
 
 get filteredRecords() {
-    return this.viewChildRecords.map((record) => {
+    return this.viewableChildRecords.map((record) => {
         return {
             id: record.id, // Add the record ID here for unique identification
-            values: this.filteredDisplayObjectKeys.map((key) => {
+            values : this.filteredDisplayObjectKeys.map((key) => {
                 return {
-                    key: key,
-                    value: record[key.toLowerCase()] || '' // Dynamically access record properties
+                    key : key,
+                    value : record[key.toLowerCase()] || '' // Dynamically access record properties
                 };
             })
         };
@@ -342,9 +359,8 @@ get filteredRecords() {
 get displayedSelectedRecordFields() {
     // Return an array of objects to be used in the template
     return Object.keys(this.selectedRecordFields).map(key => {
-        return { key, value: this.selectedRecordFields[key] };
+        return { key, value : this.selectedRecordFields[key] };
     });
 }
-
 
 }

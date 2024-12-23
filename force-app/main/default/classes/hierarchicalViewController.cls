@@ -1,87 +1,93 @@
 public with sharing class hierarchicalViewController {
     
+    /**
+     * Retrieves a list of child records related to a given parent record, based on dynamic parent and child object API names.
+     * This method performs input validation, dynamically constructs a SOQL query based on the objects provided, 
+     * and returns a list of child records in a map format, where each record is represented by a map of field values.
+     * 
+     * @param recordId The ID of the parent record for which related child records need to be retrieved.
+     * @param parentObjectApiName The API name of the parent object (standard or custom).
+     * @param childObjectApiName The API name of the child object (standard or custom).
+     * 
+     * @return List<Map<String, Object>> A list of maps, where each map contains field names as keys and field values as corresponding values 
+     *         for each child record related to the provided parent record. The list can be empty if no child records are found.
+     */
     @AuraEnabled(cacheable=true)
-	public static List<Map<String, Object>> getRelatedChildRecords(Id recordId, String parentObjectApiName, String childObjectApiName) {
-        System.debug(parentObjectApiName);
+    public static List<Map<String, Object>> getRelatedChildRecords(Id recordId, String parentObjectApiName, String childObjectApiName) {
 
-    	System.debug(childObjectApiName);
+        // If the parent object is custom, replace the suffix '__c' with '__r' for the relationship field
+        String temp = parentObjectApiName;
+        if (parentObjectApiName.endsWith('_c')) {
+            parentObjectApiName = parentObjectApiName.trim().replace('__c', '__r');
+        }
 
-    string temp = parentObjectApiName;
-    if(parentObjectApiName.right(2) == '_c'){
-        parentObjectApiName = parentObjectApiName.trim().replace('__c', '__r');
-    }
-    
-    List<Map<String, Object>> result = new List<Map<String, Object>>();
-    
-    // Input validation
-    if (recordId == null || String.isEmpty(parentObjectApiName) || String.isEmpty(childObjectApiName)) {
-        System.debug('1 Error : Parent or Child or id empty');
-        throw new AuraHandledException('Invalid input parameters. Please provide valid recordId, parentObjectApiName, and childObjectApiName.');
-    }
-    
-    try {
-         //Get the child object schema to dynamically fetch fields
-        Schema.SObjectType childType = Schema.getGlobalDescribe().get(childObjectApiName);
-        if (childType == null) {
-            System.debug('2 Error : no related child exist');
-            throw new AuraHandledException('Child object type not found for: ' + childObjectApiName);
-        }
-        
-        Schema.DescribeSObjectResult childDescribe = childType.getDescribe();
-        Map<String, Schema.SObjectField> childFields = childDescribe.fields.getMap();
-        
-        // If there are no fields in the child object, throw an error
-        if (childFields.isEmpty()) {
-            System.debug('3 Error : Child fields are empty');
-            throw new AuraHandledException('No fields found for child object: ' + childObjectApiName);
-        }
-   
-        List<String> fieldNames = new List<String>();
-        for (String fieldName : childFields.keySet()) {
-            fieldNames.add(fieldName);
-        }
-        
-        // Construct the dynamic SOQL query
-        String soqlQuery;
-    	if (temp.right(2) == '_c') {
-    	// For custom objects, ensure the correct relationship name is used.
-    	String relationshipField = parentObjectApiName + '.Id';
-    	soqlQuery = 'SELECT ' + String.join(fieldNames, ', ') + 
-                ' FROM ' + childObjectApiName + 
-                ' WHERE ' + relationshipField + ' = :recordId ';
-		} else {
-    	// For standard objects, use the relationship field properly
-    	soqlQuery = 'SELECT ' + String.join(fieldNames, ', ') + 
-                ' FROM ' + childObjectApiName + 
-                ' WHERE ' + childObjectApiName + '.' + parentObjectApiName + 'Id = :recordId ';
-		}
+        // Initialize the result list that will hold the child record data as maps
+        List<Map<String, Object>> result = new List<Map<String, Object>>();
 
-		
-        List<SObject> childRecords = new List<SObject>();
+        // Input validation: Ensure that no parameter is null or empty
+        if (recordId == null || String.isEmpty(parentObjectApiName) || String.isEmpty(childObjectApiName)) {
+            System.debug('Error: Invalid input parameters. Parent Object or Child Object name or Record ID is empty.');
+            return result; // Early return if invalid parameters are found
+        }
+
         try {
-            childRecords = Database.query(soqlQuery);
-        } catch (QueryException e) {
-            System.debug('4 Error :'+e.getMessage());
-            throw new AuraHandledException('Error executing SOQL query: ' + e.getMessage());
-        }
-        
-        // Convert the child records into a list of maps (key-value pairs)
-        for (SObject childRecord : childRecords) {
-            Map<String, Object> childData = new Map<String, Object>();
-            for (String fieldName : childFields.keySet()) {
-                childData.put(fieldName, childRecord.get(fieldName));
+            // Get the child object schema to dynamically fetch fields based on the child object API name
+            Schema.SObjectType childType = Schema.getGlobalDescribe().get(childObjectApiName);
+            if (childType == null) {
+                System.debug('Error: Child object type not found for: ' + childObjectApiName);
+                return result; // Return empty result if no child object found
             }
-            result.add(childData);
+            
+            // Describe the child object and retrieve its field map
+            Schema.DescribeSObjectResult childDescribe = childType.getDescribe();
+            Map<String, Schema.SObjectField> childFields = childDescribe.fields.getMap();
+            
+            // If there are no fields in the child object, log the error and return empty result
+            if (childFields.isEmpty()) {
+                System.debug('Error: No fields found for child object: ' + childObjectApiName);
+                return result;
+            }
+
+            // Collect the field names from the child object fields map
+            List<String> fieldNames = new List<String>();
+            for (String fieldName : childFields.keySet()) {
+                fieldNames.add(fieldName);
+            }
+
+            // Construct the dynamic SOQL query based on whether the parent is a custom object or standard object
+            String soqlQuery;
+            if (temp.endsWith('_c')) {
+                // For custom objects, ensure the correct relationship name is used
+                String relationshipField = parentObjectApiName + '.Id';
+                soqlQuery = 'SELECT ' + String.join(fieldNames, ', ') + 
+                            ' FROM ' + childObjectApiName + 
+                            ' WHERE ' + relationshipField + ' = :recordId ORDER BY CreatedDate DESC LIMIT 5';
+            } else {
+                // For standard objects, use the relationship field properly
+                soqlQuery = 'SELECT ' + String.join(fieldNames, ', ') + 
+                            ' FROM ' + childObjectApiName + 
+                            ' WHERE ' + childObjectApiName + '.' + parentObjectApiName + 'Id = :recordId ORDER BY CreatedDate DESC LIMIT 5';
+            }
+
+            // Query the child records using the constructed SOQL query
+            List<SObject> childRecords = Database.query(soqlQuery);
+
+            // Convert the child records into a list of maps (key-value pairs) for easier consumption by the front-end
+            for (SObject childRecord : childRecords) {
+                Map<String, Object> childData = new Map<String, Object>();
+                for (String fieldName : childFields.keySet()) {
+                    childData.put(fieldName, childRecord.get(fieldName));
+                }
+                result.add(childData);
+            }
+
+        } catch (Exception e) {
+            // Log any errors and continue processing (no exception handling needed)
+            System.debug('Error: ' + e.getMessage());
         }
-        
-    } catch (Exception e) {
-        // Catch and rethrow AuraHandledExceptions to be handled by the Aura framework
-        System.debug('5 Error :'+e.getMessage());
-      //throw e;
-  } 
-       
-    
-    System.debug('Resulting Records :'+result);
-    return result;
-}
+
+        // Debugging the resulting child records
+        System.debug('Resulting Records: ' + result);
+        return result;
+    }
 }

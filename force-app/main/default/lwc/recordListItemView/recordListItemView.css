@@ -35,6 +35,7 @@
     border-bottom: none;
 }
 
+/* applying uniform look to both datatable header as well as body */
 .datatable-body span,
 .datatable-header span {
     flex: 1; 
@@ -43,19 +44,20 @@
     white-space: nowrap; 
     padding: 2px; 
 }
-
+/* applying uniform look to first column - header + body */
 .datatable-body .narrow-column,
 .datatable-header .narrow-column 
  {
-    flex: 0 0 50px;  
-    width: 50px; 
+    flex: 0 0 3.125rem;  
+    width: 3.125rem; 
 }
 
 /* Row styling */
 
 .row-item {
     display: flex;              
-    align-items: center;       
+    align-items: center;  
+    padding-left: 1rem;     
 }
 
 .row-item lightning-icon {
