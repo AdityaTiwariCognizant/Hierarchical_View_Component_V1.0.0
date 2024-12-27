@@ -30,12 +30,12 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
     isLoading = true;
 
 
-    /*Method : Apex wired method to fetch related records to the object
-               whoes recordId is being passed as parameter
-         @param recordId :  recordId of current object whose related records
-                            are needed to be displayed
-         @param parentObjectApiName : objectApiName of the current object
-         @param childObjectApiName : objectApiName of the related (opened) object
+/*Method : Apex wired method to fetch related records to the object
+           whoes recordId is being passed as parameter
+@param recordId :  recordId of current object whose related records
+                   are needed to be displayed
+@param parentObjectApiName : objectApiName of the current object
+@param childObjectApiName : objectApiName of the related (opened) object
     */
 
 @wire(getChildRecords,{recordId:'$recordid',parentObjectApiName:'$parentobjectapiname',childObjectApiName:'$childobjectapiname'})
@@ -331,17 +331,6 @@ get filteredObjectFields() {
     .slice(0, 3); 
 }
 
-// get filteredRecords() {
-//     return this.viewableChildRecords.map(record => {
-//         return this.filteredObjectFields.map(key => {
-//             return {
-//                 key : key,
-//                 value : record[key.toLowerCase()] || '' // Dynamically access record properties
-//             };
-//         });
-//     });
-// }
-
 // filtering records from viewableChildRecords object array
 // with the filtered fields by string matching 
 get filteredRecords() {
@@ -358,6 +347,7 @@ get filteredRecords() {
     });
 }
 
+// getter for the fields records to be displayed iteratively on ui markup
 get displayedSelectedRecordFields() {
     // Return an array of objects to be used in the template
     return Object.keys(this.selectedRecordFields).map(key => {
