@@ -1,4 +1,4 @@
-public with sharing class hierarchicalViewController {
+public with sharing class HierarchicalViewController {
     
     /**
      * Retrieves a list of child records related to a given parent record, based on dynamic parent and child object API names.

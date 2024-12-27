@@ -1,3 +1,105 @@
 <template>
     
+    <template lwc:if={isLoading}>
+        <lightning-spinner alternative-text="Loading related object" variant="brand" size="medium"></lightning-spinner>
+    </template>
+
+    <template lwc:if={showNoDataCard}>
+        <lightning-card title="No Related Records" icon-name="utility:info">
+            <div class="slds-p-horizontal_medium">
+                <p>No related records exist for this object.</p>
+            </div>
+        </lightning-card>
+    </template>
+
+    <template lwc:if={recordClicked}>
+        <div class="datatable">
+            <span class="datatable-header">
+                <span class="narrow-column"> </span>
+                <!-- Render column headers dynamically -->
+                <template for:each={filteredObjectFields} for:item="key">
+                    <span key={key} >{key}</span>
+                </template>
+            </span>
+            <div class="datatable-body slds-grid slds-grid_align-spread">
+                <span class="slds-col slds-size_1-of-13 narrow-column">
+                    <!-- Toggle button to collapse record details -->
+                    <button class="slds-button slds-button_icon slds-m-right_x-small" onclick={handleRecordCollapse}>
+                        <lightning-icon icon-name="utility:chevrondown" alternative-text="Toggle" size="x-small"></lightning-icon>
+                    </button>
+                </span>
+
+                <template for:each={displayedSelectedRecordFields} for:item="field">
+                    <span key={field.fieldName} class="slds-col slds-size_3-of-13  slds-text-link" onclick={handleRecordNavigation} >
+                        <!-- Display field value, or fallback if value is empty -->
+                        {field.value}
+                    </span>
+                </template>
+     
+              
+            </div>
+
+            <!-- nested parent related object view component 
+                                        propagating attribute :- 
+                                     >  parentid : passing a record id of currently opened record
+                                        An opened record can be observed in 2 ways :
+                                        1. The record on which component has been placed
+                                        2. The inner record while opening related objects and
+                                           then focusing on a particular related record -->
+
+            <c-hierarchical-object-view parentid={selectedRecord.id}></c-hierarchical-object-view>
+        </div>
+    </template>
+
+    <template lwc:else>
+        <div class="datatable">
+            <span class="datatable-header">
+                <span class="narrow-column"> </span>
+                <!-- Render column headers dynamically -->
+                <template for:each={filteredObjectFields} for:item="key">
+                    <span key={key} >{key}</span>
+                </template>
+            </span>
+
+            <ul class="datatable-body">
+                <!-- Render rows based on filtered records and columns -->
+                 <!-- Iterate over records to be displayed -->
+                <template for:each={filteredRecords} for:item="record">
+                    <li key={record.id}>  <!-- Use the record's ID as the key for each row -->
+                        <span data-id={record.id} class="narrow-column">
+                            <button
+                                data-id={record.id}
+                                class="slds-button slds-button_icon slds-m-right_x-small "
+                                onclick={handleRecordSelection}>
+                                <lightning-icon
+                                    icon-name="utility:chevronright"
+                                    alternative-text="Toggle"
+                                    size="x-small">
+                                </lightning-icon>
+                            </button>
+                        </span>
+
+                        <!-- Display the values dynamically for each record -->
+                        <template for:each={record.values} for:item="item">
+                            <span key={item.key} class="row-item">
+                                {item.value}
+                            </span>
+                        </template>
+                    </li>
+                </template>
+            </ul>
+
+            <template lwc:if={requireViewAll}>
+                <footer class="slds-p-top_medium">
+                    
+                    <div class="slds-grid slds-grid_align-end">
+                    <button class="slds-button slds-button_neutral slds-m-right_medium" onclick={handleViewAll}>View All</button>
+                    </div>
+                </footer>
+              
+            </template>
+        </div>
+    </template>
+
+    
 </template>
