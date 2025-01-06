@@ -45,10 +45,11 @@ export default class HierarchicalObjectView extends LightningElement {
         console.log('PARENT ID:'+this.parentid);
     }
 
-   /*Method : Standard Salesforce lightning method to fetch metadata of an object
-               whoes recordId is being passed as parameter
-         @param recordId :  recordId of current object whose related fields
-                            are needed to be process and display ui data
+   /*
+    *Method: Standard Salesforce lightning method to fetch metadata of an object
+    *        whoes recordId is being passed as parameter
+    * @param recordId: recordId of current object whose related fields
+    *                   are needed to be process and display ui data
     */
     @wire(getRecord, { recordId: '$recordId', layoutTypes:['Compact'] })
     wiredRecord({ error, data }) {

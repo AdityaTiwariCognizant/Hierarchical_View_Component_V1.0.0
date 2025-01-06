@@ -7,6 +7,7 @@ import {NavigationMixin} from 'lightning/navigation';
 
 // matching/similar strings for some fields that make sense to be displayed
 const FIELD_CRITERIA = ['Time','Title','Date','Account','Type','Status','Priority', 'Amount','Phone'];
+// const FIELD_CRITERIA = ['Name','CreatedDate','LastmodifiedDate','Owner'];
 
 export default class HierarchicalRecordListView extends NavigationMixin(LightningElement) {
 
@@ -30,13 +31,14 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
     isLoading = true;
 
 
-/*Method : Apex wired method to fetch related records to the object
-           whoes recordId is being passed as parameter
-@param recordId :  recordId of current object whose related records
-                   are needed to be displayed
-@param parentObjectApiName : objectApiName of the current object
-@param childObjectApiName : objectApiName of the related (opened) object
-    */
+/*Method: Apex wired method to fetch related records to the object
+* whoes recordId is being passed as parameter
+*
+* @param recordId: recordId of current object whose related records
+* are needed to be displayed
+* @param parentObjectApiName: objectApiName of the current object
+* @param childObjectApiName: objectApiName of the related (opened) object
+*/
 
 @wire(getChildRecords,{recordId:'$recordid',parentObjectApiName:'$parentobjectapiname',childObjectApiName:'$childobjectapiname'})
     wiredChildRecord({error,data}){
@@ -96,7 +98,9 @@ handleRecordSelection(event) {
 
 
 
-// processing the fields of record selected on ui to show in expanded view
+/*
+* processing the fields of record selected on ui to show in expanded view
+*/
 processSelectedRecordFields() {
     if (this.selectedRecord) {
         const selectedFields = {};
@@ -116,8 +120,9 @@ processSelectedRecordFields() {
     }
 }
 
-// while in the expanded view, whenever user click the record 
-// ui will navigate to that record's record page
+/*
+* Navigate to selecte record detail page 
+*/ 
 handleRecordNavigation(event) {
     const clickedRecordId = event.currentTarget.dataset.id;
 
@@ -131,7 +136,9 @@ handleRecordNavigation(event) {
     });
 }
 
-// Event handler for action of collapsing an opened related record
+/*
+* Handle related record collaps action
+*/ 
 handleRecordCollapse(event) {
 
     this.recordClicked = false;
@@ -145,11 +152,11 @@ handleRecordCollapse(event) {
 
 }
 
-/*Method : Salesforce standard UI wired method to fetch list of object
-           and their attributes related to the supplied objectApiName
-        
-         @param parentObjectApiName : objectApiName of the opened related object
-    */
+/*Method: wired method to fetch list of object
+* and their attributes related to the supplied objectApiName
+*        
+* @param parentObjectApiName: objectApiName of the opened related object
+*/
 @wire(getRelatedListsInfo, { parentObjectApiName: '$childobjectapiname'})
 wiredRelatedLists({ error, data }) {
     if (data) {
@@ -174,7 +181,11 @@ wiredRelatedLists({ error, data }) {
 
 }
 
-// Creating relationship keyword for both Standard & Custom Objects
+/*
+* Get the relationship object name as string for both Standard & Custom Objects
+*
+* @param: API name of child object
+*/
 findRelationShipName(childObjApiName) {
 
     const suffix = childObjApiName.slice(-2)
@@ -188,7 +199,9 @@ findRelationShipName(childObjApiName) {
     }
 }
 
-// Event handler to view all button : will navigate ui to all related record list
+/*
+* Button 'View All' navigation
+*/
 handleViewAll(evt) {
 
     console.log('recordid ' + this.recordid);
@@ -208,12 +221,13 @@ handleViewAll(evt) {
  
 }
 
-/*Method : Standard Salesforce lightning method to fetch metadata of an object
-           whoes recordId is being passed as parameter
-@param recordId :  recordId of current object whose related fields
-                   are neededs to be processed and displayed on UI
-        
-    */
+/*
+* Method: Standard Salesforce lightning method to fetch metadata of an object
+* whoes recordId is being passed as parameter
+*
+* @param recordId :  recordId of current object whose related fields
+* are neededs to be processed and displayed on UI
+*/
 
 @wire(getRecord, { recordId: '$openedObjectRecordId', layoutTypes: ['Compact'] })
 wiredRecord({ error, data }) {
@@ -235,8 +249,10 @@ wiredRecord({ error, data }) {
     }
 }
 
-// Logic for - Filter and determining the fields to display
-
+/*
+* Logic for - Filter and determining the fields to display
+* @param: inputObject contains Object's compact layout fields
+*/
 filterAndModifyObject(inputObject) {
     // Step 1: Separate keys with 'name' or 'number' and those that don't
     let alwaysIncludedFields = {};
@@ -252,29 +268,26 @@ filterAndModifyObject(inputObject) {
         );
 
         // If the key matches any of the FIELD_CRITERIA criteria, include it in filteredFields
-        if (matchesCriteria && value && value.displayValue !== null && value.displayValue !== '') {
+        if (matchesCriteria && value) { //  && value.displayValue !== null && value.displayValue !== ''
             filteredFields[key] = value;
-        }
-
-        // Always include keys that contain 'name' or 'number' in the key, regardless of displayValue
+        } // Always include keys that contain 'name' or 'number' in the key, regardless of displayValue
         else if (key.toLowerCase().includes('name') || key.toLowerCase().includes('number')) {
             alwaysIncludedFields[key] = value;
-        }        
-
-        // Exclude the ownerid field explicitly
-        else if (key.toLowerCase().includes('ownerid')) {
-            // Don't add anything to filteredFields for ownerid
-        }
+        } // Exclude the ownerid field explicitly
+        // else if (key.toLowerCase().includes('ownerid')) {
+        //     // Don't add anything to filteredFields for ownerid
+        // }
         // For other fields, include them only if displayValue is not null
-         else if (value.value !== '') {
-             filteredFields[key] = value;
-         }
+        else if (value.value) { //  !== ''
+            filteredFields[key] = value;
+        }
     });
 
     // Step 3: Combine alwaysIncludedFields with the rest of the filteredFields
     const toDisplayFields = { ...alwaysIncludedFields, ...filteredFields };
 
-    // Step 4: Sort the keys by the size of their value's displayValue (if present), else by the size of the value field
+    // Step 4: Sort by field label
+    // Sort the keys by the size of their value's displayValue (if present), else by the size of the value field
     const sortedKeys = Object.keys(toDisplayFields)
         .sort((a, b) => {
             const valueA = toDisplayFields[a];
