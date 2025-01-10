@@ -15,6 +15,11 @@ public with sharing class HierarchicalViewController {
     @AuraEnabled(cacheable=true)
     public static List<Map<String, Object>> getRelatedChildRecords(Id recordId, String parentObjectApiName, String childObjectApiName) {
 
+        System.debug('RECORD ID ::: '+recordId);
+        System.debug('parentObjectApiName ::: '+parentObjectApiName);
+        System.debug('childObjectApiName ::: '+childObjectApiName);
+
+
         // If the parent object is custom, replace the suffix '__c' with '__r' for the relationship field
         String temp = parentObjectApiName;
         if (parentObjectApiName.endsWith('_c')) {

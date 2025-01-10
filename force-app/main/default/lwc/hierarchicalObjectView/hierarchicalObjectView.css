@@ -50,10 +50,6 @@ li {
     
 }
 
-
- .link-style {
-    color: #0070d2; 
-    text-decoration: underline; 
-    cursor: pointer; 
+.slds-card__header-link {
+    text-decoration: none;
 }
-

@@ -2,12 +2,13 @@ import { LightningElement,wire,api,track } from 'lwc';
 import getChildRecords from '@salesforce/apex/HierarchicalViewController.getRelatedChildRecords';
 import { getRelatedListsInfo } from "lightning/uiRelatedListApi";
 import { getRecord } from 'lightning/uiRecordApi';
+import { getObjectInfo } from 'lightning/uiObjectInfoApi';
+
 import {NavigationMixin} from 'lightning/navigation';
 
 
 // matching/similar strings for some fields that make sense to be displayed
-const FIELD_CRITERIA = ['Time','Title','Date','Account','Type','Status','Priority', 'Amount','Phone'];
-// const FIELD_CRITERIA = ['Name','CreatedDate','LastmodifiedDate','Owner'];
+const FIELD_CRITERIA = ['Email','Date','Time','Title','Type','Status','Priority', 'Amount','Phone'];
 
 export default class HierarchicalRecordListView extends NavigationMixin(LightningElement) {
 
@@ -15,15 +16,18 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
     @api flexipageRegionWidth;
     @api parentobjectapiname;
     @api childobjectapiname;
+   
     
     @track childRecords = [];
     @track viewableChildRecords = [];
     @track relatedListsObjectAttributes;
     @track toDisplayFieldNames = [];
     @track openedObjectRecordId;
+    @track openedRecordFields;
 
     relatedListsSummary;
     selectedRecordId;
+    columnHeaderLabelsArr;
 
     recordClicked = false;
     requireViewAll = false;
@@ -55,7 +59,8 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
             //picking up the record id of a record to get object metadata 
             // for preparing datatable display fields - any record will do
             this.openedObjectRecordId = this.viewableChildRecords[0].id;
-            
+            this.showNoDataCard = false;
+
         }
         else {
             //handling empty data for child records
@@ -69,13 +74,15 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
         }, 400);
         }
         else if (error) {
-        console.error(error);
+        //console.error(error);
         console.log(error);
     }
 
 }
+/*
+* Event handler for selection of particular related record
+*/
 
-// Event handler for selection of particular related record
 handleRecordSelection(event) {
 
     this.recordClicked = true;
@@ -125,12 +132,13 @@ processSelectedRecordFields() {
 */ 
 handleRecordNavigation(event) {
     const clickedRecordId = event.currentTarget.dataset.id;
+    const objectApiName = this.selectedRecord ? this.selectedRecord.apiName : this.childobjectapiname;
 
     this[NavigationMixin.Navigate]({
         type: 'standard__recordPage',
         attributes: {
-            recordId: this.selectedRecordId,  // The record ID to navigate to
-            objectApiName: this.selectedRecord.name,  // The object API name (e.g., 'Account', 'Contact')
+            recordId: this.selectedRecordId || clickedRecordId,  // The record ID to navigate to
+            objectApiName: objectApiName,  // The object API name (e.g., 'Account', 'Contact')
             actionName: 'view'  // Use 'view' to view the record page
         }
     });
@@ -176,7 +184,7 @@ wiredRelatedLists({ error, data }) {
 
     } 
     else if (error) {
-        console.error('Error fetching related lists:', error);
+        //console.error('Error fetching related lists:', error);
     }
 
 }
@@ -201,6 +209,8 @@ findRelationShipName(childObjApiName) {
 
 /*
 * Button 'View All' navigation
+*
+* @param : event of onclick on a primary field of an inline record
 */
 handleViewAll(evt) {
 
@@ -233,25 +243,33 @@ handleViewAll(evt) {
 wiredRecord({ error, data }) {
     if (data) {
         this.recordData = data.fields; // Get field data
-        //console.log('DATA FIELDS '+JSON.stringify(this.recordData));
-
-        console.log('DISPLAY FIELDS ' + JSON.stringify(this.filterAndModifyObject(this.recordData)));
+        console.log('WHOLE DATA ::: '+JSON.stringify(data));
+        console.log('DATA FIELDS '+JSON.stringify(this.recordData));
         this.displayObject = this.filterAndModifyObject(this.recordData);
+
 
         this.toDisplayFieldNames = Object.keys(this.displayObject).filter(key => {
             // Only keep the fields that have 'displayValue' and 'value' properties
             return this.displayObject[key]?.displayValue !== undefined && this.displayObject[key] ?. value !== undefined;
         });
-        console.log('DISPLAY OBJ KEYS ' + JSON.stringify(this.toDisplayFieldNames));
+        console.log('DISPLAY FIELDS ' + JSON.stringify(this.filterAndModifyObject(this.recordData)));
+
+        console.log('DISPLAY OBJ FIELDS ' + JSON.stringify(this.toDisplayFieldNames));
+
+        this.columnHeaderLabelsArr = this.getLabelsFromAPINameArr(this.openedRecordFields,this.toDisplayFieldNames);
+
+        console.log('COLUMN FIELDS ::: '+this.columnHeaderLabelsArr);
+
 
     } else if (error) { 
-        console.error('Error retrieving record:', error);
+        //console.error('Error retrieving record:', error);
     }
 }
 
 /*
-* Logic for - Filter and determining the fields to display
+* Method - Filter and determining the fields to display
 * @param: inputObject contains Object's compact layout fields
+* @return : fields array to be used for fetching apiNames of fields to be displayed
 */
 filterAndModifyObject(inputObject) {
     // Step 1: Separate keys with 'name' or 'number' and those that don't
@@ -261,6 +279,10 @@ filterAndModifyObject(inputObject) {
     // Step 2: Separate keys based on whether they contain 'name' or 'number'
     Object.keys(inputObject).forEach((key) => {
         const value = inputObject[key];
+
+        if (key.includes('__r')) {
+            return;
+        }
 
         // Check if the key matches any of the criteria in FIELD_CRITERIA (case insensitive match)
         const matchesCriteria = FIELD_CRITERIA.some(criteria => 
@@ -286,46 +308,23 @@ filterAndModifyObject(inputObject) {
     // Step 3: Combine alwaysIncludedFields with the rest of the filteredFields
     const toDisplayFields = { ...alwaysIncludedFields, ...filteredFields };
 
-    // Step 4: Sort by field label
-    // Sort the keys by the size of their value's displayValue (if present), else by the size of the value field
-    const sortedKeys = Object.keys(toDisplayFields)
-        .sort((a, b) => {
-            const valueA = toDisplayFields[a];
-            const valueB = toDisplayFields[b];
-
-            // Length of the displayValue or the value if displayValue is null
-            const lengthA = valueA.displayValue ? valueA.displayValue.length : (valueA.value ? valueA.value.toString().length : 0);
-            const lengthB = valueB.displayValue ? valueB.displayValue.length : (valueB.value ? valueB.value.toString().length : 0);
-
-            return lengthA - lengthB;  // Sort by increasing length
-        });
+   
 
     return toDisplayFields;
 }
 
-
-// getUniqueRecords(records) {
-//     const uniqueRecords = [];
-//     const recordIds = new Set();
-
-//     records.forEach(record => {
-//         if (!recordIds.has(record.id)) {
-//             recordIds.add(record.id);
-//             uniqueRecords.push(record);
-//         }
-//     });
-
-//     return uniqueRecords;
-// }
-
+/*
+* getter ensures unique keys and limit display fields to 4
+*/
 get filteredObjectFields() {
     return [...new Set(this.toDisplayFieldNames)].slice(0, 4);// Ensure unique keys and limit to 4
     
 }
 
 
-
-// New computed property to get all record values based on filtered keys
+/*
+* New computed property to get all record values based on filtered keys
+*/
 displayRecordValues() {
     return this.viewableChildRecords.map(record => {
         return this.filteredObjectFields.map(key => {
@@ -337,35 +336,115 @@ displayRecordValues() {
         });
     });
 }
-// explicitly removed account keyword due to many non-useful fields being included
+
+/*
+ explicitly removed account keyword to prevent irrelevant fields being included
+ */
 get filteredObjectFields() {
     return [...new Set(this.toDisplayFieldNames)]
     .filter(key => !key.toLowerCase().includes('account')) // Exclude any key with 'account'
     .slice(0, 3); 
 }
 
-// filtering records from viewableChildRecords object array
-// with the filtered fields by string matching 
+/*
+* explicitly removed account keyword to prevent irrelevant fields being included
+*/
+get columnHeaderLabels(){
+    return [...new Set(this.columnHeaderLabelsArr)]
+    .filter(key => !key.toLowerCase().includes('account'))
+    .slice(0, 3);
+
+}
+
+/*
+* filtering records from viewableChildRecords object array
+* with the filtered fields by string matching 
+*/
 get filteredRecords() {
     return this.viewableChildRecords.map((record) => {
         return {
             id: record.id, // Add the record ID here for unique identification
-            values : this.filteredObjectFields.map((key) => {
+            values: this.filteredObjectFields.map((key) => {
+                const value = record[key.toLowerCase()] || '--'; // Dynamically access record properties
+                const applyLink = key.toLowerCase().includes('name') || key.toLowerCase().includes('number'); // Check for 'name' or 'number'
+                
                 return {
-                    key : key,
-                    value : record[key.toLowerCase()] || '' // Dynamically access record properties
+                    key: key,
+                    value: value,
+                    applyLink: applyLink // Add the applyLink property
                 };
             })
         };
     });
 }
 
-// getter for the fields records to be displayed iteratively on ui markup
+/*
+* getter for the fields records to be displayed iteratively on ui markup
+*/
 get displayedSelectedRecordFields() {
-    // Return an array of objects to be used in the template
-    return Object.keys(this.selectedRecordFields).map(key => {
-        return { key, value : this.selectedRecordFields[key] };
-    });
+     // Return an array of objects to be used in the template
+     return Object.keys(this.selectedRecordFields).map(key => {
+        const value = this.selectedRecordFields[key];
+ 
+        const applyLink = (key.toLowerCase().includes('name') || key.toLowerCase().includes('number'));
+        return {
+         key : key,
+         value : value,
+         applyLink : applyLink
+        }
+     });
 }
+
+
+/*
+* Method: To search for field label names from object with key
+* matching the api names present in array 
+* 
+* @param data : Fields object containing everything about each field of an sObject
+* @param apiName : Array containing filtered api names decided to be displayed on ui
+*
+* @returns : Array of field labels to be used in column header to display fields of
+*            selected object
+*/
+
+getLabelsFromAPINameArr(FieldsData, apiNames) {
+    // Initialize an array to store the labels
+    const labels = [];
+
+    // Loop through the API names and extract the corresponding label
+    apiNames.forEach(apiName => {
+        const fieldData = FieldsData[apiName];
+
+        if (fieldData && fieldData.label) {  // Check if the API name exists in the DATA object
+            labels.push(FieldsData[apiName].label);  // Push the label to the result array
+        }
+    });
+
+    return labels;
+}
+
+
+
+/*Method: Wired method to fetch object info to extract complete field 
+*         information, so that field label can be used on column header
+*
+* @param ojectApiName: objectApiName of the target object 
+*/
+
+@wire(getObjectInfo, { objectApiName: '$childobjectapiname' })
+wireOpenRecord({ error, data }){
+    if(data){
+        console.log('OPEN RECORD FIELDS ::: '+JSON.stringify(data.fields));
+
+            this.openedRecordFields = data.fields;
+        
+    }
+    else{
+        console.log('ERROR ::: '+JSON.stringify(error));    
+    }
+        
+}
+
+
 
 }

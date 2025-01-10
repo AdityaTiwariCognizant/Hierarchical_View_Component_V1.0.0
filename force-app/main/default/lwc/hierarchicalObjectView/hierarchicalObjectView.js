@@ -1,8 +1,8 @@
-
 import { LightningElement, api, track, wire } from 'lwc';
 import { getObjectInfo } from 'lightning/uiObjectInfoApi';
 import { getRelatedListsInfo } from "lightning/uiRelatedListApi";
 import { getRecord } from 'lightning/uiRecordApi';
+import { getRelatedListCount } from 'lightning/uiRelatedListApi';
 
 export default class HierarchicalObjectView extends LightningElement {
 
@@ -33,6 +33,7 @@ export default class HierarchicalObjectView extends LightningElement {
 
     innerBodyClass = "slds-m-around_small  custom-card-border";
 
+    relatedListId = '';
 
     connectedCallback() {
         console.log('RECORD ID :'+this.recordId);
@@ -70,16 +71,23 @@ export default class HierarchicalObjectView extends LightningElement {
                 this.isLoading = false;
             }, 200);
         } else if (error) {
-            console.error('Error fetching record:', error);
+            console.log('Error fetching record:', error);
         }
         
     }
+
 
     removeSuffix(apiName) {
         return apiName.replace(/__c$/, ''); // Removes the __c suffix if it exists
     }
 
-    //Fetch Parent Object Info
+    /*
+    * Method: Wired getObjectInfo to fetch themeinfo of parent object 
+              (where component is added)
+    *
+    * @param parentObjectApiName: objectApiName of object whose themeinfo is needed                            
+    */
+
     @wire(getObjectInfo, { objectApiName: '$parentObjectApiName' })
     parentObjectInfo({ error, data }) {
         if (data) {
@@ -94,24 +102,17 @@ export default class HierarchicalObjectView extends LightningElement {
         }
         console.log('Parent Api Name: ' + this.parentObjectApiName);
         } else if (error) {
-            console.error('Error fetching parent object info:', error);
+            console.log('Error fetching parent object info:', error);
         }
     }
 
-   
-    handleRowAction(event) {
-        const actionName = event.detail.action.name;
-
-        if (actionName === 'id_click') {
-            const rowData = event.detail.row; 
-            this.selectedObjectId = rowData.id; 
-            this.selectedObjectName = rowData.name; 
-            console.log('Selected Object ID:', this.selectedObjectId); 
-            console.log('Selected Object Name:', this.selectedObjectName); 
-            
-        }
-    
-    }
+    /*
+    * Method: Wired getRelatedListsInfo to fetch relatedList objects and their 
+    *        attributes
+    * 
+    * @param parentObjectApiName: objectApiName of object whose related list
+    *                              needs to be fetched     
+    */
 
     @wire(getRelatedListsInfo, { parentObjectApiName: '$parentObjectApiName',recordTypeId: "012000000000000AAA" })
     wiredRelatedLists({ error, data }) {
@@ -120,31 +121,37 @@ export default class HierarchicalObjectView extends LightningElement {
             this.relatedLists = data.relatedLists; 
             console.log('Related List ' + JSON.stringify(this.relatedLists));
         
-
-            this.relatedListOptions = this.relatedLists.map(item => ({
+            
+            this.relatedListOptions = this.relatedLists
+            .map(item => ({
                 label : item.entityLabel,
                 apiName : item.objectApiName,
                 value : item.entityLabel, 
                 iconUrl : item.themeInfo.iconUrl,
                 color : '#'+item.themeInfo.color,
                 isVisible :false,
-                utility :'utility:chevronright'
+                utility :'utility:chevronright',
+                relatedListId : item.relatedListId
             }));
             console.log(' ### ALL ACCESS :' + JSON.stringify(this.relatedListOptions));
 
             if (!this.relatedLists || this.relatedLists.length === 0) {
                 this.showNoObjCard = true;  // Set flag to show the "No related objects" message
                 console.log('RELATEDLIST EMPTY');
+              
             }
 
+            this.recursiveCallback();
+
         } else if (error) {
-            console.error('Error fetching related lists:', error);
+            //console.logs('Error fetching related lists:', error);
             this.showNoObjCard = true;
         }
     }
-
-   
-
+    
+    /*
+     *  Event handler for action of selecting an object from related object list
+     */
     expandClickedObject(event) {
         this.clearStaleData();
         this.expandedView = true;  
@@ -169,12 +176,15 @@ export default class HierarchicalObjectView extends LightningElement {
         if(item) {
             item.isVisible = !item.isVisible;
             item.utility = 'utility:chevrondown'
-            this.relatedListOptions = [...this.relatedListOptions]
+            this.relatedListOptions = [...this.relatedListOptions];
             
         }
-
-       // console.log('%%%%% '+JSON.stringify(this.relatedListOptions));
     }
+
+    /**
+     * Method : Wire getObjectInfo to fetch themeinfo of selected related Object
+     * @param objectApiName : apiName of related child object to fetch ui theme info 
+     */
 
     @wire(getObjectInfo, { objectApiName: '$childApiName' })
     childObjectInfo({ error, data }) {
@@ -191,7 +201,7 @@ export default class HierarchicalObjectView extends LightningElement {
             console.log('Child Api Name: ' + this.childApiName);
             
         } else if (error) {
-            console.error('Error fetching child object info:', error);
+            //console.error('Error fetching child object info:', error);
             this.childIcon = '';  // Handle error by setting default values
             this.childColor = ''; // Handle error by setting default values
         }
@@ -207,6 +217,9 @@ export default class HierarchicalObjectView extends LightningElement {
         return `background-color: ${this.childColor};`;
     }
 
+    /*
+    * Event handler for action of selecting a record
+    */ 
     handleRecordSelection(event) {
         this.clearStaleData();
 
@@ -217,16 +230,18 @@ export default class HierarchicalObjectView extends LightningElement {
 
     }
 
+    /*
+    * Event handler for action of collapsing an expanded record
+    */
+
     handleRecordCollapse(event) {
         console.log('Selected Record Collapsed');
         this.clearStaleData();
         this.parentid = '';
     }
-
-    itemStyle(color) {
-        return `background-color: ${color};`;
-    }
-
+    /*
+    * Action handler for toggling expanded and collapsed view
+    */
     toggleCard() {
         this.expandedView =! this.expandedView;
         
@@ -241,14 +256,48 @@ export default class HierarchicalObjectView extends LightningElement {
         this.clearStaleData();
     }
 
+    //getter to show chevron icon where included
     get showChevron() {
         return true; 
     }
 
+    //function clears old data
     clearStaleData(){
         this.selectedRecordId = '';
         this.selectedRecordName = '';
         this.modifyHeader = '';
     }
-    
+
+   index = 0;
+   recursiveCallback() {
+    // Check if index is within bounds of objList
+    if (this.index < this.relatedListOptions.length) {
+        const data = this.relatedListOptions[this.index];
+        this.relatedListId = data.relatedListId;  // Assign the current relatedListId to objName
+    } else {
+        this.index = 0; // Reset the index once all items have been processed
+    }
+}
+
+    @wire(getRelatedListCount, {
+        parentRecordId: '$recordId',
+        relatedListId: '$relatedListId',
+    })
+      wiredRelatedListCount({ error, data }) {
+        if (data) {
+            this.responseData = data;
+            console.log('RELATED LIST COUNT DATA :::: '+JSON.stringify(this.responseData));
+            
+            this.relatedListOptions = this.relatedListOptions.map(item => {
+                if (item.relatedListId === this.relatedListId) {
+                    return { ...item, recordCount: this.responseData.count};
+                }
+                return item;
+            });
+            this.index++;
+            this.recursiveCallback();
+            
+            this.error = undefined;
+          } else if (error) {}
+      }
 }

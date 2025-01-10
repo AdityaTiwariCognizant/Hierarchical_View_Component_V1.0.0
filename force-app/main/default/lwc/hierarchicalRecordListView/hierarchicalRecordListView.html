@@ -1,23 +1,21 @@
 <template>
-    
     <template lwc:if={isLoading}>
         <lightning-spinner alternative-text="Loading related object" variant="brand" size="medium"></lightning-spinner>
     </template>
-
     <template lwc:if={showNoDataCard}>
         <lightning-card title="No Related Records" icon-name="utility:info">
-            <div class="slds-p-horizontal_medium">
+            <div class="slds-p-horizontal_large">
                 <p>No related records exist for this object.</p>
             </div>
         </lightning-card>
     </template>
-
+    <template lwc:else>
     <template lwc:if={recordClicked}>
         <div class="datatable">
             <span class="datatable-header">
-                <span class="narrow-column"> </span>
-                <!-- Render column headers dynamically -->
-                <template for:each={filteredObjectFields} for:item="key">
+                <span class="narrow-column"><lightning-icon icon-name="utility:chevronleft" alternative-text="back" size="x-small" onclick={handleRecordCollapse}></lightning-icon> </span>
+                <!-- Render column headers dynamically  columnHeaderLabels-->
+                <template for:each={columnHeaderLabels} for:item="key">
                     <span key={key} >{key}</span>
                 </template>
             </span>
@@ -30,9 +28,14 @@
                 </span>
 
                 <template for:each={displayedSelectedRecordFields} for:item="field">
-                    <span key={field.fieldName} class="slds-col slds-size_3-of-13  slds-text-link" onclick={handleRecordNavigation} >
-                        <!-- Display field value, or fallback if value is empty -->
-                        {field.value}
+                    
+                    <span lwc:if={field.applyLink} key={field.fieldName} class="slds-col slds-size_3-of-13 ">
+                          
+                        <a href="javascript:void(0);" onclick={handleRecordNavigation} data-id={field.value}> {field.value} </a>
+                    </span>
+
+                    <span lwc:else key={field.fieldName} class="slds-col slds-size_3-of-13">
+                        {field.value} 
                     </span>
                 </template>
      
@@ -49,14 +52,15 @@
 
             <c-hierarchical-object-view parentid={selectedRecord.id}></c-hierarchical-object-view>
         </div>
+      
     </template>
 
     <template lwc:else>
         <div class="datatable">
             <span class="datatable-header">
                 <span class="narrow-column"> </span>
-                <!-- Render column headers dynamically -->
-                <template for:each={filteredObjectFields} for:item="key">
+                <!-- Render column headers dynamically  columnHeaderLabels -->
+                <template for:each={columnHeaderLabels} for:item="key">
                     <span key={key} >{key}</span>
                 </template>
             </span>
@@ -81,25 +85,24 @@
 
                         <!-- Display the values dynamically for each record -->
                         <template for:each={record.values} for:item="item">
-                            <span key={item.key} class="row-item">
+                            <span lwc:if={item.applyLink} key={item.key} class="row-item">
+                                <a href="javascript:void(0);" onclick={handleRecordNavigation} data-id={record.id} >{item.value}</a>
+                            </span>
+                            <span lwc:else key={item.key} class="row-item">
                                 {item.value}
                             </span>
                         </template>
                     </li>
                 </template>
             </ul>
-
             <template lwc:if={requireViewAll}>
                 <footer class="slds-p-top_medium">
-                    
                     <div class="slds-grid slds-grid_align-end">
                     <button class="slds-button slds-button_neutral slds-m-right_medium" onclick={handleViewAll}>View All</button>
                     </div>
                 </footer>
-              
             </template>
         </div>
     </template>
-
-    
+    </template>  
 </template>
