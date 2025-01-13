@@ -440,7 +440,7 @@ wireOpenRecord({ error, data }){
         
     }
     else{
-        console.log('ERROR ::: '+JSON.stringify(error));    
+        console.log('ERROR ::: '+JSON.stringify(error));
     }
         
 }
