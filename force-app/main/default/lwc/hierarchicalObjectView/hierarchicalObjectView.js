@@ -290,7 +290,7 @@ export default class HierarchicalObjectView extends LightningElement {
     * 
     * @param : parentRecordId - recordId of parent object of related list
     * @param : relatedListId - The API name of a related list or child relationship
-    *                          (updated using recursive callback) 
+    *                              (updated using recursive callback) 
     */      
 
     @wire(getRelatedListRecords, {
