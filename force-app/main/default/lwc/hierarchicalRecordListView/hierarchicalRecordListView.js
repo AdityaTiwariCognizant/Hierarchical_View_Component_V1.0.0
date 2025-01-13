@@ -118,7 +118,7 @@ processSelectedRecordFields() {
             if (this.selectedRecord[recordKey]) {
                 selectedFields[key] = this.selectedRecord[recordKey]; // Add it to selectedFields
             } else {
-                selectedFields[key] = '--'; // If not found, set a placeholder value
+                selectedFields[key] = 'Not Available'; // If not found, set a placeholder value
             }
         });
 
@@ -360,22 +360,24 @@ get columnHeaderLabels(){
 * filtering records from viewableChildRecords object array
 * with the filtered fields by string matching 
 */
+
 get filteredRecords() {
     return this.viewableChildRecords.map((record) => {
         return {
-            id: record.id, // Add the record ID here for unique identification
+            id: record.id,  // Add the record ID here for unique identification
             values: this.filteredObjectFields.map((key) => {
-                const value = record[key.toLowerCase()] || '--'; // Dynamically access record properties
-                const applyLink = key.toLowerCase().includes('name') || key.toLowerCase().includes('number'); // Check for 'name' or 'number'
-                
+                const value = record[key.toLowerCase()]; // Dynamically access record properties
+                if (!value) {
+                    return null;  // Skip this field if the value is not available
+                }
                 return {
                     key: key,
                     value: value,
-                    applyLink: applyLink // Add the applyLink property
+                    applyLink: key.toLowerCase().includes('name') || key.toLowerCase().includes('number') // Check for 'name' or 'number'
                 };
-            })
+            }).filter(item => item !== null) // Filter out the null values
         };
-    });
+    }).filter(record => record.values.length > 0);  // Remove any records with no valid fields
 }
 
 /*
@@ -394,7 +396,6 @@ get displayedSelectedRecordFields() {
         }
      });
 }
-
 
 /*
 * Method: To search for field label names from object with key

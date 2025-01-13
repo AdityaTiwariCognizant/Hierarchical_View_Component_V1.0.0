@@ -2,7 +2,7 @@ import { LightningElement, api, track, wire } from 'lwc';
 import { getObjectInfo } from 'lightning/uiObjectInfoApi';
 import { getRelatedListsInfo } from "lightning/uiRelatedListApi";
 import { getRecord } from 'lightning/uiRecordApi';
-import { getRelatedListRecords } from 'lightning/uiRelatedListApi';
+import { getRelatedListCount } from 'lightning/uiRelatedListApi';
 
 export default class HierarchicalObjectView extends LightningElement {
 
@@ -19,7 +19,7 @@ export default class HierarchicalObjectView extends LightningElement {
     childColor;
     
     @track relatedLists;
-    @track relatedListItems;
+    @track relatedListOptions;
 
     expandedView = false;
     isLoading = true;
@@ -122,7 +122,7 @@ export default class HierarchicalObjectView extends LightningElement {
             console.log('Related List ' + JSON.stringify(this.relatedLists));
         
             
-            this.relatedListItems = this.relatedLists
+            this.relatedListOptions = this.relatedLists
             .map(item => ({
                 label : item.entityLabel,
                 apiName : item.objectApiName,
@@ -133,7 +133,7 @@ export default class HierarchicalObjectView extends LightningElement {
                 utility :'utility:chevronright',
                 relatedListId : item.relatedListId
             }));
-            console.log(' ### ALL ACCESS :' + JSON.stringify(this.relatedListItems));
+            console.log(' ### ALL ACCESS :' + JSON.stringify(this.relatedListOptions));
 
             if (!this.relatedLists || this.relatedLists.length === 0) {
                 this.showNoObjCard = true;  // Set flag to show the "No related objects" message
@@ -157,7 +157,7 @@ export default class HierarchicalObjectView extends LightningElement {
         this.expandedView = true;  
 
         //reset all list items first
-        this.relatedListItems.forEach(item => {
+        this.relatedListOptions.forEach(item => {
             item.isVisible = false;
             item.utility = 'utility:chevronright';
           
@@ -165,18 +165,18 @@ export default class HierarchicalObjectView extends LightningElement {
 
         // Access the data-id attribute to get the clicked item's value
         const selectedValue = event.target.dataset.id;  
-        this.selectedObject = this.relatedListItems.find(item => item.value === selectedValue).apiName; // Find the object by value
-        this.childObjName = this.relatedListItems.find(item => item.value === selectedValue).label;
+        this.selectedObject = this.relatedListOptions.find(item => item.value === selectedValue).apiName; // Find the object by value
+        this.childObjName = this.relatedListOptions.find(item => item.value === selectedValue).label;
         this.childApiName = String(this.selectedObject);
 
         
 
        
-        const item = this.relatedListItems.find(item=>item.value === selectedValue);
+        const item = this.relatedListOptions.find(item=>item.value === selectedValue);
         if(item) {
             item.isVisible = !item.isVisible;
             item.utility = 'utility:chevrondown'
-            this.relatedListItems = [...this.relatedListItems];
+            this.relatedListOptions = [...this.relatedListOptions];
             
         }
     }
@@ -245,13 +245,13 @@ export default class HierarchicalObjectView extends LightningElement {
     toggleCard() {
         this.expandedView =! this.expandedView;
         
-        this.relatedListItems.forEach(item => {
+        this.relatedListOptions.forEach(item => {
             item.isVisible = false; // Toggle the boolean value
             item.utility = 'utility:chevronright';
         });
 
         // Update the items to trigger reactivity
-        this.relatedListItems = [...this.relatedListItems]; 
+        this.relatedListOptions = [...this.relatedListOptions]; 
 
         this.clearStaleData();
     }
@@ -268,32 +268,18 @@ export default class HierarchicalObjectView extends LightningElement {
         this.modifyHeader = '';
     }
 
-    /*
-     * Recursive Callback function to look-up each related object attribute of count 
-     * This ensures only the Object that have related records in them appears on the
-     * Object list
-     */
    index = 0;
    recursiveCallback() {
     // Check if index is within bounds of objList
-    if (this.index < this.relatedListItems.length) {
-        const data = this.relatedListItems[this.index];
+    if (this.index < this.relatedListOptions.length) {
+        const data = this.relatedListOptions[this.index];
         this.relatedListId = data.relatedListId;  // Assign the current relatedListId to objName
     } else {
         this.index = 0; // Reset the index once all items have been processed
     }
 }
 
-    /*
-    * Method :Wired method to look for related list records attribute to verify which related
-    * object contains related records in them
-    * 
-    * @param : parentRecordId - recordId of parent object of related list
-    * @param : relatedListId - The API name of a related list or child relationship
-    *                              (updated using recursive callback) 
-    */      
-
-    @wire(getRelatedListRecords, {
+    @wire(getRelatedListCount, {
         parentRecordId: '$recordId',
         relatedListId: '$relatedListId',
     })
@@ -302,9 +288,9 @@ export default class HierarchicalObjectView extends LightningElement {
             this.responseData = data;
             console.log('RELATED LIST COUNT DATA :::: '+JSON.stringify(this.responseData));
             
-            this.relatedListItems = this.relatedListItems.map(item => {
+            this.relatedListOptions = this.relatedListOptions.map(item => {
                 if (item.relatedListId === this.relatedListId) {
-                    return { ...item, recordCount: this.responseData.records.length};
+                    return { ...item, recordCount: this.responseData.count};
                 }
                 return item;
             });
