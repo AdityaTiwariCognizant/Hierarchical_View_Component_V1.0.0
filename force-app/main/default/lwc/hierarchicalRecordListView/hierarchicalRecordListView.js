@@ -8,7 +8,8 @@ import {NavigationMixin} from 'lightning/navigation';
 
 
 // matching/similar strings for some fields that make sense to be displayed
-const FIELD_CRITERIA = ['Email','Date','Time','Title','Type','Status','Priority', 'Amount','Phone'];
+//const FIELD_CRITERIA = ['Email','Date','Time','Title','Type','Status','Priority', 'Amount','Phone'];
+const FIELD_CRITERIA = ['Name','Number'];
 
 export default class HierarchicalRecordListView extends NavigationMixin(LightningElement) {
 
@@ -51,6 +52,8 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
             this.childRecords = data;
             //for compactness we will display only 4 records on ui
             this.viewableChildRecords = this.childRecords.slice(0,4);
+
+            console.log('VIEWABLE CHILD ::: '+JSON.stringify(this.viewableChildRecords));
         
             //providing a button to view all records if no. of records > 4
             if(this.childRecords.length > 4) {
@@ -436,16 +439,11 @@ getLabelsFromAPINameArr(FieldsData, apiNames) {
 wireOpenRecord({ error, data }){
     if(data){
         console.log('OPEN RECORD FIELDS ::: '+JSON.stringify(data.fields));
-
-            this.openedRecordFields = data.fields;
-        
+            this.openedRecordFields = data.fields; 
     }
     else{
         console.log('ERROR ::: '+JSON.stringify(error));
-    }
-        
+    }    
 }
-
-
 
 }

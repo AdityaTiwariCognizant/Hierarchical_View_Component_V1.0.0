@@ -2,7 +2,7 @@ import { LightningElement, api, track, wire } from 'lwc';
 import { getObjectInfo } from 'lightning/uiObjectInfoApi';
 import { getRelatedListsInfo } from "lightning/uiRelatedListApi";
 import { getRecord } from 'lightning/uiRecordApi';
-import { getRelatedListCount } from 'lightning/uiRelatedListApi';
+import { getRelatedListRecords } from 'lightning/uiRelatedListApi';
 
 export default class HierarchicalObjectView extends LightningElement {
 
@@ -35,6 +35,8 @@ export default class HierarchicalObjectView extends LightningElement {
 
     relatedListId = '';
 
+    flag;
+
     connectedCallback() {
         console.log('RECORD ID :'+this.recordId);
         
@@ -44,6 +46,8 @@ export default class HierarchicalObjectView extends LightningElement {
             this.recordId = this.parentid;
         }
         console.log('PARENT ID:'+this.parentid);
+
+        
     }
 
    /*
@@ -120,7 +124,8 @@ export default class HierarchicalObjectView extends LightningElement {
             
             this.relatedLists = data.relatedLists; 
             console.log('Related List ' + JSON.stringify(this.relatedLists));
-        
+            
+
             
             this.relatedListOptions = this.relatedLists
             .map(item => ({
@@ -131,7 +136,8 @@ export default class HierarchicalObjectView extends LightningElement {
                 color : '#'+item.themeInfo.color,
                 isVisible :false,
                 utility :'utility:chevronright',
-                relatedListId : item.relatedListId
+                relatedListId : item.relatedListId 
+                         
             }));
             console.log(' ### ALL ACCESS :' + JSON.stringify(this.relatedListOptions));
 
@@ -142,6 +148,8 @@ export default class HierarchicalObjectView extends LightningElement {
             }
 
             this.recursiveCallback();
+
+
 
         } else if (error) {
             //console.logs('Error fetching related lists:', error);
@@ -268,20 +276,47 @@ export default class HierarchicalObjectView extends LightningElement {
         this.modifyHeader = '';
     }
 
+    get relatedListOptions(){
+        return this.relatedListOptions.filter(item => item.recordCount > 0);
+
+    }
+
+
+    /*
+     * Recursive Callback function to look-up each related object attribute of count 
+     * This ensures only the Object that have related records in them appears on the
+     * Object list
+     */
+
    index = 0;
    recursiveCallback() {
+
     // Check if index is within bounds of objList
     if (this.index < this.relatedListOptions.length) {
         const data = this.relatedListOptions[this.index];
         this.relatedListId = data.relatedListId;  // Assign the current relatedListId to objName
+       console.log('RELATED LIST ID *** '+this.relatedListId);
+
     } else {
         this.index = 0; // Reset the index once all items have been processed
     }
+
 }
 
-    @wire(getRelatedListCount, {
+/*
+    * Method :Wired method to look for related list records attribute to verify which related
+    * object contains related records in them
+    * 
+    * @param : parentRecordId - recordId of parent object of related list
+    * @param : relatedListId - The API name of a related list or child relationship
+    *                              (updated using recursive callback) 
+    */    
+
+
+    @wire(getRelatedListRecords, {
         parentRecordId: '$recordId',
         relatedListId: '$relatedListId',
+        pageSize: 1
     })
       wiredRelatedListCount({ error, data }) {
         if (data) {
@@ -290,14 +325,20 @@ export default class HierarchicalObjectView extends LightningElement {
             
             this.relatedListOptions = this.relatedListOptions.map(item => {
                 if (item.relatedListId === this.relatedListId) {
-                    return { ...item, recordCount: this.responseData.count};
+                    return { ...item, recordCount: this.responseData.records.length};
                 }
                 return item;
             });
             this.index++;
+            console.log('INDEX %%%'+this.index);
             this.recursiveCallback();
-            
+            const hasRelatedListsWithRecords = this.relatedListOptions.some(item => item.recordCount > 0);
+            this.showNoObjCard = !hasRelatedListsWithRecords;
             this.error = undefined;
-          } else if (error) {}
+
+          } else if (error) {
+            
+            console.log('getRelatedListRecords ERROR ### '+JSON.stringify(error));
+          }
       }
 }
