@@ -5,7 +5,7 @@
 		<name>ApexClass</name>
     </types>	
 	<types>
-    <members>hierarchicalObjectView</members>
+		<members>hierarchicalObjectView</members>
 		<members>hierarchicalRecordListView </members>
 		<name>LightningComponentBundle</name>
     </types>	

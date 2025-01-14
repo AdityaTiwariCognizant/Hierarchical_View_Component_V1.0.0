@@ -1,8 +1,8 @@
 import { LightningElement, api, track, wire } from 'lwc';
 import { getObjectInfo } from 'lightning/uiObjectInfoApi';
-import { getRelatedListsInfo } from "lightning/uiRelatedListApi";
+import { getRelatedListCount, getRelatedListsInfo } from "lightning/uiRelatedListApi"; // getRelatedListsInfo
 import { getRecord } from 'lightning/uiRecordApi';
-import { getRelatedListRecords } from 'lightning/uiRelatedListApi';
+// import { getRelatedListRecords } from 'lightning/uiRelatedListApi';
 
 export default class HierarchicalObjectView extends LightningElement {
 
@@ -10,47 +10,69 @@ export default class HierarchicalObjectView extends LightningElement {
     @api recordId;
     @api parentid;
 
+    // below variables are used in html file to render Parent object related icon, text, etc
     parentObjectApiName;
     parentIcon;
     parentColor;
     
+    // below variables are used in html file to render Child object related icon, text, etc
     childApiName;
     childIcon;
     childColor;
     
+    // nj check this variable
     @track relatedLists;
     @track relatedListOptions;
 
+    // 
     expandedView = false;
     isLoading = true;
     showNoObjCard = false;
     showHeader = true;
     modifyHeader = '';
 
-
+    // 
     selectedObjectId;
     selectedRecordId;
-
+    // escription
     innerBodyClass = "slds-m-around_small  custom-card-border";
 
+    // put description
     relatedListId = '';
 
+    // nj
     flag;
+    
+    // related object index
+    index = 0;
 
-    connectedCallback() {
-        console.log('RECORD ID :'+this.recordId);
-        
-        if (this.recordId == null){
-            this.showHeader = false;
-            this.innerBodyClass = "slds-m-around_small";
-            this.recordId = this.parentid;
-        }
-        console.log('PARENT ID:'+this.parentid);
+    /*
+    ********  wire methods ***** 
+    */
 
-        
+    @wire(getRelatedListCount, {
+        parentRecordId: '$recordId',
+        relatedListId: '$relatedListId',
+        maxCount: 1
+    })
+    wireCount({ error, data }) {
+        if (data) {
+            console.log('RELATED LIST COUNT DATA :::: '+JSON.stringify(data));
+            this.relatedListOptions = this.relatedListOptions.map(item => {
+                if (item.relatedListId === this.relatedListId) {
+                    // return { ...item, recordCount: data.records.length};
+                    return { ...item, recordCount: data.count};
+                }
+                return item;
+            });
+            this.index++;
+            this.recursiveCallback();
+        } else if (error) {
+            console.log('getRelatedListRecords ERROR ### '+JSON.stringify(error));
+          }
     }
 
-   /*
+    /*
     *Method: Standard Salesforce lightning method to fetch metadata of an object
     *        whoes recordId is being passed as parameter
     * @param recordId: recordId of current object whose related fields
@@ -76,13 +98,7 @@ export default class HierarchicalObjectView extends LightningElement {
             }, 200);
         } else if (error) {
             console.log('Error fetching record:', error);
-        }
-        
-    }
-
-
-    removeSuffix(apiName) {
-        return apiName.replace(/__c$/, ''); // Removes the __c suffix if it exists
+        }        
     }
 
     /*
@@ -121,7 +137,8 @@ export default class HierarchicalObjectView extends LightningElement {
     @wire(getRelatedListsInfo, { parentObjectApiName: '$parentObjectApiName',recordTypeId: "012000000000000AAA" })
     wiredRelatedLists({ error, data }) {
         if (data) {
-            
+
+            // nj check this reference
             this.relatedLists = data.relatedLists; 
             console.log('Related List ' + JSON.stringify(this.relatedLists));
             
@@ -137,14 +154,15 @@ export default class HierarchicalObjectView extends LightningElement {
                 isVisible :false,
                 utility :'utility:chevronright',
                 relatedListId : item.relatedListId 
-                         
+                        
             }));
             console.log(' ### ALL ACCESS :' + JSON.stringify(this.relatedListOptions));
 
+            // nj check this reference
             if (!this.relatedLists || this.relatedLists.length === 0) {
                 this.showNoObjCard = true;  // Set flag to show the "No related objects" message
                 console.log('RELATEDLIST EMPTY');
-              
+            
             }
 
             this.recursiveCallback();
@@ -156,6 +174,60 @@ export default class HierarchicalObjectView extends LightningElement {
             this.showNoObjCard = true;
         }
     }
+
+    /**
+     * Method : Wire getObjectInfo to fetch themeinfo of selected related Object
+     * @param objectApiName : apiName of related child object to fetch ui theme info 
+     */
+
+    @wire(getObjectInfo, { objectApiName: '$childApiName' })
+    childObjectInfo({ error, data }) {
+        if (data) {
+            // Check if themeInfo is available in the data object before accessing its properties
+            if (data.themeInfo) {
+                this.childIcon = data.themeInfo.iconUrl || '';  // Use default empty string if iconUrl is not available
+                this.childColor = data.themeInfo.color ? `#${data.themeInfo.color}` : '';  // Use default empty string if color is not available
+            } else {
+                // If themeInfo is not available, set default values
+                this.childIcon = ''; 
+                this.childColor = '';
+            }
+            console.log('Child Api Name: ' + this.childApiName);
+            
+        } else if (error) {
+            //console.error('Error fetching child object info:', error);
+            this.childIcon = '';  // Handle error by setting default values
+            this.childColor = ''; // Handle error by setting default values
+        }
+    }
+
+    /*
+    ********  wire methods ***** 
+    */ 
+
+
+
+    connectedCallback() {
+        console.log('RECORD ID :'+this.recordId);
+        
+        if (this.recordId == null){
+            this.showHeader = false;
+            this.innerBodyClass = "slds-m-around_small";
+            this.recordId = this.parentid;
+        }
+        console.log('PARENT ID:'+this.parentid);
+
+        
+    }
+
+   
+
+
+    removeSuffix(apiName) {
+        return apiName.replace(/__c$/, ''); // Removes the __c suffix if it exists
+    }
+
+    
     
     /*
      *  Event handler for action of selecting an object from related object list
@@ -189,31 +261,7 @@ export default class HierarchicalObjectView extends LightningElement {
         }
     }
 
-    /**
-     * Method : Wire getObjectInfo to fetch themeinfo of selected related Object
-     * @param objectApiName : apiName of related child object to fetch ui theme info 
-     */
-
-    @wire(getObjectInfo, { objectApiName: '$childApiName' })
-    childObjectInfo({ error, data }) {
-        if (data) {
-            // Check if themeInfo is available in the data object before accessing its properties
-            if (data.themeInfo) {
-                this.childIcon = data.themeInfo.iconUrl || '';  // Use default empty string if iconUrl is not available
-                this.childColor = data.themeInfo.color ? `#${data.themeInfo.color}` : '';  // Use default empty string if color is not available
-            } else {
-                // If themeInfo is not available, set default values
-                this.childIcon = ''; 
-                this.childColor = '';
-            }
-            console.log('Child Api Name: ' + this.childApiName);
-            
-        } else if (error) {
-            //console.error('Error fetching child object info:', error);
-            this.childIcon = '';  // Handle error by setting default values
-            this.childColor = ''; // Handle error by setting default values
-        }
-    }
+    
     
     // Style for Parent Icon
     get iconParentStyle() {
@@ -276,6 +324,8 @@ export default class HierarchicalObjectView extends LightningElement {
         this.modifyHeader = '';
     }
 
+
+    // check this method
     get relatedListOptions(){
         return this.relatedListOptions.filter(item => item.recordCount > 0);
 
@@ -288,20 +338,25 @@ export default class HierarchicalObjectView extends LightningElement {
      * Object list
      */
 
-   index = 0;
+   
    recursiveCallback() {
+    // this.relatedListId = this.relatedListOptions[0].relatedListId;
+    // console.log('RELATED LIST ID *** '+this.relatedListId);
 
     // Check if index is within bounds of objList
     if (this.index < this.relatedListOptions.length) {
         const data = this.relatedListOptions[this.index];
         this.relatedListId = data.relatedListId;  // Assign the current relatedListId to objName
        console.log('RELATED LIST ID *** '+this.relatedListId);
-
     } else {
         this.index = 0; // Reset the index once all items have been processed
+        this.relatedListOptions = this.relatedListOptions.filter(item => item.recordCount > 0);
+        console.log('FILTERD LIST ----- '+JSON.stringify(this.relatedListOptions));
+    }   
+
     }
 
-}
+    
 
 /*
     * Method :Wired method to look for related list records attribute to verify which related
@@ -313,32 +368,34 @@ export default class HierarchicalObjectView extends LightningElement {
     */    
 
 
-    @wire(getRelatedListRecords, {
-        parentRecordId: '$recordId',
-        relatedListId: '$relatedListId',
-        pageSize: 1
-    })
-      wiredRelatedListCount({ error, data }) {
-        if (data) {
-            this.responseData = data;
-            console.log('RELATED LIST COUNT DATA :::: '+JSON.stringify(this.responseData));
+    // @wire(getRelatedListRecords, {
+    //     parentRecordId: '$recordId',
+    //     relatedListId: '$relatedListId',
+    //     pageSize: 1
+    // })
+    //   wiredRelatedListCount({ error, data }) {
+    //     if (data) {
+    //         this.responseData = data;
+    //         console.log('RELATED LIST COUNT DATA :::: '+JSON.stringify(this.responseData));
             
-            this.relatedListOptions = this.relatedListOptions.map(item => {
-                if (item.relatedListId === this.relatedListId) {
-                    return { ...item, recordCount: this.responseData.records.length};
-                }
-                return item;
-            });
-            this.index++;
-            console.log('INDEX %%%'+this.index);
-            this.recursiveCallback();
-            const hasRelatedListsWithRecords = this.relatedListOptions.some(item => item.recordCount > 0);
-            this.showNoObjCard = !hasRelatedListsWithRecords;
-            this.error = undefined;
-
-          } else if (error) {
+    //         // this.relatedListOptions = this.relatedListOptions.map(item => {
+    //         //     if (item.relatedListId === this.relatedListId) {
+    //         //         return { ...item, recordCount: this.responseData.records.length};
+    //         //     }
+    //         //     return item;
+    //         // });
+    //         // this.index++;
+    //         // console.log('INDEX %%%'+this.index);
+    //         // this.recursiveCallback();
             
-            console.log('getRelatedListRecords ERROR ### '+JSON.stringify(error));
-          }
-      }
+    //         // ******** nj ***********
+    //         // const hasRelatedListsWithRecords = this.relatedListOptions.some(item => item.recordCount > 0);
+    //         // this.showNoObjCard = !hasRelatedListsWithRecords;
+    //         // this.error = undefined;
+    //         // ******** nj ***********
+    //       } else if (error) {
+            
+    //         console.log('getRelatedListRecords ERROR ### '+JSON.stringify(error));
+    //       }
+    //   }
 }
