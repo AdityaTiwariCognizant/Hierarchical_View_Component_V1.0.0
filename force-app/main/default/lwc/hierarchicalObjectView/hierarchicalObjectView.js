@@ -2,6 +2,8 @@ import { LightningElement, api, track, wire } from 'lwc';
 import { getObjectInfo } from 'lightning/uiObjectInfoApi';
 import { getRelatedListCount, getRelatedListsInfo } from "lightning/uiRelatedListApi"; // getRelatedListsInfo
 import { getRecord } from 'lightning/uiRecordApi';
+// import { getRelatedListRecords } from 'lightning/uiRelatedListApi';
+
 export default class HierarchicalObjectView extends LightningElement {
 
     @api flexipageRegionWidth;
