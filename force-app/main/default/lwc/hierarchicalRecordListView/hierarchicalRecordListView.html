@@ -73,7 +73,7 @@
                         <span data-id={record.id} class="narrow-column">
                             <button
                                 data-id={record.id}
-                                class="slds-button slds-button_icon slds-m-right_x-small "
+                                class="slds-button slds-button_icon slds-m-right_x-small"
                                 onclick={handleRecordSelection}>
                                 <lightning-icon
                                     icon-name="utility:chevronright"
@@ -85,10 +85,10 @@
 
                         <!-- Display the values dynamically for each record -->
                         <template for:each={record.values} for:item="item">
-                            <span lwc:if={item.applyLink} key={item.key} class="row-item">
-                                <a href="javascript:void(0);" onclick={handleRecordNavigation} data-id={record.id} >{item.value}</a>
+                            <span lwc:if={item.applyLink} key={item.key} class="row-item ellipsis">
+                                <a href="javascript:void(0);" onclick={handleRecordNavigation} data-id={record.id} class="ellipsis">{item.value}</a>
                             </span>
-                            <span lwc:else key={item.key} class="row-item">
+                            <span lwc:else key={item.key} class="row-item ellipsis">
                                 {item.value}
                             </span>
                         </template>

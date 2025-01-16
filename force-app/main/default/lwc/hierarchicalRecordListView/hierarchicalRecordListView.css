@@ -64,6 +64,12 @@
     margin-right: 0.5rem;      
 }
 
+.ellipsis {
+    white-space: nowrap;         /* Prevent text from wrapping */
+    overflow: hidden;            /* Hide the overflow */
+    text-overflow: ellipsis;     /* Show ellipsis for overflow */
+}
+
 .first-column{
     width: 4rem;
 }

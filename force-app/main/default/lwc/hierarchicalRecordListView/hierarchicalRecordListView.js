@@ -233,7 +233,7 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
                 if (this.selectedRecord[recordKey]) {
                     selectedFields[key] = this.selectedRecord[recordKey]; // Add it to selectedFields
                 } else {
-                    selectedFields[key] = 'Not Available'; // If not found, set a placeholder value
+                    selectedFields[key] = ''; // If not found, set a placeholder value
                 }
             });
 
@@ -391,7 +391,7 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
     get filteredObjectFields() {
         return [...new Set(this.toDisplayFieldNames)]
         .filter(key => !key.toLowerCase().includes('account')) // Exclude any key with 'account'
-        .slice(0, 3); 
+        .slice(0, 4); 
     }
 
     /*
@@ -400,7 +400,7 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
     get columnHeaderLabels(){
         return [...new Set(this.columnHeaderLabelsArr)]
         .filter(key => !key.toLowerCase().includes('account'))
-        .slice(0, 3);
+        .slice(0, 4);
 
     }
 
@@ -414,19 +414,24 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
             return {
                 id: record.id,  // Add the record ID here for unique identification
                 values: this.filteredObjectFields.map((key) => {
-                    const value = record[key.toLowerCase()]; // Dynamically access record properties
+                    var value = record[key.toLowerCase()]; // Dynamically access record properties
                     if (!value) {
-                        return null;  // Skip this field if the value is not available
+                        value = '';  // Skip this field if the value is not available
                     }
                     return {
                         key: key,
                         value: value,
-                        applyLink: key.toLowerCase().includes('name') || key.toLowerCase().includes('number') // Check for 'name' or 'number'
+                        applyLink: (key.toLowerCase().includes('name') || key.toLowerCase().includes('number')) // Check for 'name' or 'number'
                     };
                 }).filter(item => item !== null) // Filter out the null values
             };
         }).filter(record => record.values.length > 0);  // Remove any records with no valid fields
     }
+
+    
+
+    
+    
 
     /*
     * getter for the fields records to be displayed iteratively on ui markup
@@ -444,6 +449,10 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
             }
         });
     }
+
+
+    
+    
 
     /*
     * Method: To search for field label names from object with key
