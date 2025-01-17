@@ -385,22 +385,36 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
         });
     }
 
-    /*
-    explicitly removed account keyword to prevent irrelevant fields being included
-     */
-    get filteredObjectFields() {
-        return [...new Set(this.toDisplayFieldNames)]
-        .filter(key => !key.toLowerCase().includes('account')) // Exclude any key with 'account'
-        .slice(0, 4); 
+    filterFields(fields) {
+        return [...new Set(fields)]
+            .filter(key => !key.toLowerCase().includes('account'))  // Exclude any key with 'account'
+            .slice(0, 4);  // Limit to 4 fields
     }
+    
+
+    /*
+    * Syncing filteredObjectFields with columnHeaderLabels such that column label
+    * dictates what record data needs to appear on ui
+    */
+    get filteredObjectFields() {
+        // Filter fields based on column header labels
+        return this.columnHeaderLabels.map(label => {
+            // Find the field with a matching label from the toDisplayFieldNames
+            const matchingField = this.toDisplayFieldNames.find(field => {
+                const fieldData = this.openedRecordFields[field];
+                return fieldData && fieldData.label === label;  // Ensure label matches
+            });
+            return matchingField;  // Return the matched field (if any)
+        }).filter(Boolean); // Remove any null or undefined values
+    }
+    
 
     /*
     * explicitly removed account keyword to prevent irrelevant fields being included
     */
     get columnHeaderLabels(){
-        return [...new Set(this.columnHeaderLabelsArr)]
-        .filter(key => !key.toLowerCase().includes('account'))
-        .slice(0, 4);
+        return this.filterFields(this.columnHeaderLabelsArr);
+
 
     }
 
@@ -412,7 +426,7 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
     get filteredRecords() {
         return this.viewableChildRecords.map((record) => {
             return {
-                id: record.id,  // Add the record ID here for unique identification
+                id: record.id,  // Ensure that each row has a unique ID
                 values: this.filteredObjectFields.map((key) => {
                     var value = record[key.toLowerCase()]; // Dynamically access record properties
                     if (!value) {
@@ -423,16 +437,11 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
                         value: value,
                         applyLink: (key.toLowerCase().includes('name') || key.toLowerCase().includes('number')) // Check for 'name' or 'number'
                     };
-                }).filter(item => item !== null) // Filter out the null values
+                }).filter(item => item !== null)  // Filter out any null values
             };
         }).filter(record => record.values.length > 0);  // Remove any records with no valid fields
     }
-
     
-
-    
-    
-
     /*
     * getter for the fields records to be displayed iteratively on ui markup
     */
@@ -450,10 +459,6 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
         });
     }
 
-
-    
-    
-
     /*
     * Method: To search for field label names from object with key
     * matching the api names present in array 
@@ -466,22 +471,22 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
     */
 
     getLabelsFromAPINameArr(FieldsData, apiNames) {
-        // Initialize an array to store the labels
         const labels = [];
-
-        // Loop through the API names and extract the corresponding label
+    
+        // Iterate over the API names and check if they match any field in FieldsData
         apiNames.forEach(apiName => {
             const fieldData = FieldsData[apiName];
-
-            if (fieldData && fieldData.label) {  // Check if the API name exists in the DATA object
-                labels.push(FieldsData[apiName].label);  // Push the label to the result array
+            if (fieldData && fieldData.label) {
+                labels.push(fieldData.label);  // Add the label to the result array
             }
         });
-
+    
         return labels;
     }
-
-
+    
+    /*
+    * Control when to shoe view all button to see further related records
+    */
     get showViewAllButton(){
         return this.childRecords && this.childRecords.length > 4 ? true : false;
     }

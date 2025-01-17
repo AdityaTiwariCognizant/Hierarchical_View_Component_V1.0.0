@@ -15,8 +15,8 @@
             <span class="datatable-header">
                 <span class="narrow-column"><lightning-icon icon-name="utility:chevronleft" alternative-text="back" size="x-small" onclick={handleRecordCollapse}></lightning-icon> </span>
                 <!-- Render column headers dynamically  columnHeaderLabels-->
-                <template for:each={columnHeaderLabels} for:item="key">
-                    <span key={key} >{key}</span>
+                <template for:each={columnHeaderLabels} for:item="label">
+                    <span key={label} >{label}</span>
                 </template>
             </span>
             <div class="datatable-body slds-grid slds-grid_align-spread">
@@ -60,8 +60,8 @@
             <span class="datatable-header">
                 <span class="narrow-column"> </span>
                 <!-- Render column headers dynamically  columnHeaderLabels -->
-                <template for:each={columnHeaderLabels} for:item="key">
-                    <span key={key} >{key}</span>
+                <template for:each={columnHeaderLabels} for:item="label">
+                    <span key={label} >{label}</span>
                 </template>
             </span>
 
@@ -85,7 +85,7 @@
 
                         <!-- Display the values dynamically for each record -->
                         <template for:each={record.values} for:item="item">
-                            <span lwc:if={item.applyLink} key={item.key} class="row-item ellipsis">
+                            <span lwc:if={item.applyLink} key={item.key} class="row-item">
                                 <a href="javascript:void(0);" onclick={handleRecordNavigation} data-id={record.id} class="ellipsis">{item.value}</a>
                             </span>
                             <span lwc:else key={item.key} class="row-item ellipsis">
