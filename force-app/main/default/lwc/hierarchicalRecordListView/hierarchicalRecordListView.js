@@ -20,6 +20,8 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
     @api recordid; 
     @api parentobjectapiname;
     @api childobjectapiname;
+
+    @api relatedListOptions;
    
     
     @track childRecords = [];
@@ -41,6 +43,9 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
     showNoDataCard = false;
     isLoading = true;
 
+    connectedCllback(){
+        console.log('RELATED LIST OPTIONS '+this.relatedListOptions);
+    }
 
     /*
     ********  wire methods below ***** 
@@ -218,8 +223,6 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
 
     }
 
-
-
     /*
     * processing the fields of record selected on ui to show in expanded view
     */
@@ -264,9 +267,7 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
     */ 
     handleRecordCollapse(event) {
 
-        this.recordClicked = false;
-        this.selectedRecord = null;
-        this.selectedRecordFields = {}; 
+        this.resetRecordClickActions();
 
         const evt = new CustomEvent('recordcollapse', {
             detail: { id : '', name : '' }
@@ -275,7 +276,11 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
 
     }
 
-
+    resetRecordClickActions(){
+        this.recordClicked = false;
+        this.selectedRecord = null;
+        this.selectedRecordFields = {}; 
+    }
 
     /*
     * Get the relationship object name as string for both Standard & Custom Objects
@@ -284,14 +289,16 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
     */
     findRelationShipName(childObjApiName) {
 
-        const suffix = childObjApiName.slice(-2)
-        if(suffix == '_c') {
-            console.log('Child Relationship name :' + childObjApiName + '__r');
-            return childObjApiName + '__r';
-        }
-        else {
-            console.log('Child Relationship name :' + childObjApiName + 's');
-            return childObjApiName + 's';
+        console.log('RELATED LIST OPTIONS  @@@ '+JSON.stringify(this.relatedListOptions));
+
+        const relatedList = this.relatedListOptions.find(item => item.apiName === childObjApiName);
+
+        // If a matching object is found, return the relatedListId; otherwise, return null or some default value
+        if (relatedList) {
+            return relatedList.relatedListId;
+        } else {
+            console.log('RelationShip Error : Invalid Relationship !!')
+            return null; // or any default value you prefer if no match is found
         }
     }
 
@@ -326,14 +333,15 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
     * @return : fields array to be used for fetching apiNames of fields to be displayed
     */
     filterAndModifyObject(inputObject) {
-        // Step 1: Separate keys with 'name' or 'number' and those that don't
-        //let alwaysIncludedFields = {};
         let filteredFields = {};
 
-        // Step 2: Separate keys based on whether they contain 'name' or 'number'
         Object.keys(inputObject).forEach((key) => {
             const value = inputObject[key];
 
+            //Below line ensures that relationship fields 
+            // (which refer to related records, not actual field data of the record) 
+            // are not included in the list of fields that should be displayed 
+            // and not processed in the filterAndModifyObject method.
             if (key.includes('__r')) {
                 return;
             }
@@ -345,18 +353,13 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
 
             // If the key matches any of the FIELD_CRITERIA criteria, include it in filteredFields
             if (matchesCriteria && value) { 
-            filteredFields[key] = value;
-            } // Always include keys that contain 'name' or 'number' in the key, regardless of displayValue
-            // else if (key.toLowerCase().includes('name') || key.toLowerCase().includes('number')) {
-            // alwaysIncludedFields[key] = value;
-            // } 
+                filteredFields[key] = value;
+            } 
+            // if value exist include rest of the fields as well 
             else if (value.value) { 
-            filteredFields[key] = value;
+                filteredFields[key] = value;
             }
         });
-
-        // Step 3: Combine alwaysIncludedFields with the rest of the filteredFields
-        //const toDisplayFields = { ...alwaysIncludedFields, ...filteredFields };
 
         return filteredFields;
 }
@@ -368,22 +371,6 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
     //     return [...new Set(this.toDisplayFieldNames)].slice(0, 4);// Ensure unique keys and limit to 4
     
     // }
-
-
-    /*
-    * New computed property to get all record values based on filtered keys
-    */
-    displayRecordValues() {
-        return this.viewableChildRecords.map(record => {
-            return this.filteredObjectFields.map(key => {
-                const propertyKey = key.toLowerCase(); // Convert to lowercase
-                return {
-                    key: key,
-                    value: this.viewableChildRecords[propertyKey] || '' // Access the property dynamically
-                };
-            });
-        });
-    }
 
     filterFields(fields) {
         return [...new Set(fields)]
