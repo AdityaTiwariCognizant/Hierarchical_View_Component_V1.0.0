@@ -8,7 +8,6 @@ import {NavigationMixin} from 'lightning/navigation';
 
 
 // matching/similar strings for some fields that make sense to be displayed
-//const FIELD_CRITERIA = ['Email','Date','Time','Title','Type','Status','Priority', 'Amount','Phone'];
 const FIELD_CRITERIA = ['Name','Number'];
 
 export default class HierarchicalRecordListView extends NavigationMixin(LightningElement) {
@@ -18,21 +17,18 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
 
     //parent dynamic variables
     @api recordid; 
-    @api parentobjectapiname;
-    @api childobjectapiname;
-
     @api relatedListOptions;
-   
+
     
     @track childRecords = [];
     @track viewableChildRecords = [];
-    //@track relatedListsObjectAttributes;
     @track toDisplayFieldNames = [];
 
     // store expanded record information
-     openedObjectRecordId;
-     openedRecordFields;
-
+    openedObjectRecordId;
+    openedRecordFields;
+    
+    childObjectApiName;
 
     //relatedListsSummary;
     selectedRecordId;
@@ -43,15 +39,9 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
     showNoDataCard = false;
     isLoading = true;
 
-    connectedCllback(){
-        console.log('RELATED LIST OPTIONS '+this.relatedListOptions);
-    }
-
     /*
     ********  wire methods below ***** 
     */
-
-
 
     /*Method: Apex wired method to fetch related records to the object
     * whoes recordId is being passed as parameter
@@ -62,9 +52,11 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
     * @param childObjectApiName: objectApiName of the related (opened) object
     */
 
-    @wire(getChildRecords,{recordId:'$recordid',parentObjectApiName:'$parentobjectapiname',childObjectApiName:'$childobjectapiname'})
+    @wire(getChildRecords,{recordId:'$recordid',parentObjectApiName:'$getParentObjectApiName',childObjectApiName:'$childObjectApiName'})
         wiredChildRecord({error,data}){
+            console.log('PARENT API NAME $$$ '+this.relatedListOptions?.[0]?.parentObjectApiName);
             if(data) {
+
                 if (Array.isArray(data) && data.length > 0) {
                 this.childRecords = data;
                 //for compactness we will display only 4 records on ui
@@ -96,41 +88,16 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
             }
             else if (error) {
             //console.error(error);
-            console.log(error);
+            console.log('getChildRecords :: ## '+JSON.stringify(error));
         }
 
     }
 
-
-    /*  Method: wired method to fetch list of object
-    *           and their attributes related to the supplied objectApiName
-    *        
-    *  @param parentObjectApiName: objectApiName of the opened related object
-    */
-    // @wire(getRelatedListsInfo, { parentObjectApiName: '$childobjectapiname'})
-    // wiredRelatedLists({ error, data }) {
-    //     if (data) {
-    //         //console.log('Related Lists Data:', data);
-    //         //this.relatedListsSummary = data.relatedLists; // Store the related lists data
-    //         //console.log('Related List :'+this.relatedListsSummary);
-    
-
-    //         this.relatedListsObjectAttributes = data.relatedLists.map(item => ({
-    //             label : item.entityLabel,
-    //             value : item.entityLabel, // Use entityLabel as the value
-    //             iconUrl : item.themeInfo.iconUrl,
-    //             color : '#' + item.themeInfo.color,
-    //             isVisible : false
-    //         }));
-    //         // console.log('Related list object attributes :'+JSON.stringify(this.relatedListsObjectAttributes));
-
-    //     } 
-    //     else if (error) {
-    //         //console.error('Error fetching related lists:', error);
-    //     }
-
-    // }
-
+    get getParentObjectApiName() {
+        return this.relatedListOptions && this.relatedListOptions.length > 0
+            ? this.relatedListOptions[0].parentObjectApiName
+            : null; // Return null if relatedListOptions is empty or undefined
+    }
 
     /*
     * Method: Standard Salesforce lightning method to fetch metadata of an object
@@ -179,8 +146,12 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
     * @param ojectApiName: objectApiName of the target object 
     */
 
-    @wire(getObjectInfo, { objectApiName: '$childobjectapiname' })
+    @wire(getObjectInfo, { objectApiName: '$childObjectApiName' })
     wireOpenRecord({ error, data }){
+
+        console.log('childObjectApiName:%%%', this.childObjectApiName);  // Check if API name is set
+
+
         if(data){
             console.log('OPEN RECORD FIELDS ::: '+JSON.stringify(data.fields));
 
@@ -189,6 +160,8 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
         }
         else{
             console.log('ERROR ::: '+JSON.stringify(error));
+            console.error('Error details: ', JSON.stringify(error));
+
         }
         
     }
@@ -197,6 +170,15 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
     ********  wire methods above ***** 
     */
 
+    
+    connectedCallback() {
+        // Make sure relatedListOptions is populated before calling findChildObjectApiName
+       
+            this.childObjectApiName = this.findChildObjectApiName(); // Call method when data is available
+
+            console.log('RELATED LIST OPTIONS ::: ^^^ '+JSON.stringify(this.relatedListOptions));
+    }
+    
 
 
     /*
@@ -250,7 +232,7 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
     */ 
     handleRecordNavigation(event) {
         const clickedRecordId = event.currentTarget.dataset.id;
-        const objectApiName = this.selectedRecord ? this.selectedRecord.apiName : this.childobjectapiname;
+        const objectApiName = this.selectedRecord ? this.selectedRecord.apiName : this.childObjectApiName;
 
         this[NavigationMixin.Navigate]({
             type: 'standard__recordPage',
@@ -310,15 +292,15 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
     handleViewAll(evt) {
 
         console.log('recordid ' + this.recordid);
-        console.log('parent object api name ' + this.parentobjectapiname);
-        console.log('relationship name ' + this.findRelationShipName(this.childobjectapiname));
+        console.log('parent object api name ' + this.relatedListOptions[0].parentObjectApiName);
+        console.log('relationship name ' + this.findRelationShipName(this.childObjectApiName));
 
         this[NavigationMixin.Navigate]({
             type : 'standard__recordRelationshipPage',
             attributes : {
                 recordId : this.recordid,  // The parent record ID
-                objectApiName : this.parentobjectapiname,
-                relationshipApiName : this.findRelationShipName(this.childobjectapiname),  // The dynamic relationship name
+                objectApiName : this.relatedListOptions[0].parentObjectApiName,
+                relationshipApiName : this.findRelationShipName(this.childObjectApiName),  // The dynamic relationship name
                 actionName : 'view'  // View the related list
             }
         
@@ -401,8 +383,6 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
     */
     get columnHeaderLabels(){
         return this.filterFields(this.columnHeaderLabelsArr);
-
-
     }
 
     /*
@@ -411,22 +391,40 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
     */
 
     get filteredRecords() {
-        return this.viewableChildRecords.map((record) => {
+        // Create a list of transformed records
+        const transformedRecords = this.viewableChildRecords.map(record => {
+            // Extract record ID to use later
+            const recordId = record.id;
+    
+            // Map over the fields to transform each one
+            const transformedFields = this.filteredObjectFields.map(key => {
+                const fieldKey = key.toLowerCase();
+                let fieldValue = record[fieldKey] || '';  // Default to '' if value is missing
+                const applyLink = fieldKey.includes('name') || fieldKey.includes('number');  // Check for 'name' or 'number'
+    
+                // Return the transformed field object
+                return {
+                    key,
+                    value: fieldValue,
+                    applyLink
+                };
+            });
+            
+            // Filter out any fields with no value (null or undefined)
+            const validFields = transformedFields.filter(field => field.value !== null && field.value !== undefined);
+    
+            // Return an object with the record's ID and valid fields
             return {
-                id: record.id,  // Ensure that each row has a unique ID
-                values: this.filteredObjectFields.map((key) => {
-                    var value = record[key.toLowerCase()]; // Dynamically access record properties
-                    if (!value) {
-                        value = '';  // Skip this field if the value is not available
-                    }
-                    return {
-                        key: key,
-                        value: value,
-                        applyLink: (key.toLowerCase().includes('name') || key.toLowerCase().includes('number')) // Check for 'name' or 'number'
-                    };
-                }).filter(item => item !== null)  // Filter out any null values
+                id: recordId,
+                values: validFields
             };
-        }).filter(record => record.values.length > 0);  // Remove any records with no valid fields
+        });
+    
+        // Filter out records that have no valid fields
+        const validRecords = transformedRecords.filter(record => record.values.length > 0);
+    
+        // Finally, return the valid records
+        return validRecords;
     }
     
     /*
@@ -476,6 +474,22 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
     */
     get showViewAllButton(){
         return this.childRecords && this.childRecords.length > 4 ? true : false;
+    }
+
+    findChildObjectApiName(){
+        const selectedItem = this.relatedListOptions.find(item => item.isVisible === true);
+        return selectedItem ? selectedItem.apiName : ''; 
+    }
+
+    /*
+    * getter provides parentObjectApiName for the object being looked 
+    * at by accessing a member of relatedListOptions (each has common parent)
+    */
+
+    get getParentObjectApiName() {
+        return this.relatedListOptions && this.relatedListOptions.length > 0
+            ? this.relatedListOptions[0].parentObjectApiName
+            : null; // Return null if relatedListOptions is empty or undefined
     }
 
 }

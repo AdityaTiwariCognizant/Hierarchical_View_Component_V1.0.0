@@ -156,7 +156,9 @@ export default class HierarchicalObjectView extends LightningElement {
                 color : '#'+item.themeInfo.color,
                 isVisible :false,
                 utility :'utility:chevronright',
-                relatedListId : item.relatedListId 
+                relatedListId : item.relatedListId,
+                parentObjectApiName : this.parentObjectApiName
+
                         
             }));
             console.log(' ### ALL ACCESS :' + JSON.stringify(this.relatedListOptions));

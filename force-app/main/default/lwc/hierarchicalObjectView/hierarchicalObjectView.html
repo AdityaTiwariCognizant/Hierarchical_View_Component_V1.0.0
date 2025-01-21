@@ -121,14 +121,14 @@
                                             <!-- child related list component
                                         propagating attributes :-
                                       > recordid : passing recordid of currently opened record 
-                                      > parentobjectapiname : passing currently opened object's api name 
-                                      > childobjectapiname : passing the api name of selected related object
+                                      > related-list-options : relatedListOptions contain all attributes including 
+                                                               parent and self api name for each related record 
+                                                               It is also useful to get correct relationsip name
+                                                               using attribute called relatedListId
                                       > onrecordselection : event + handler from child when a record is expanded 
                                       > onrecordcollapse : event + handler from child when a record is collapsed -->
 
                                             <c-hierarchical-record-list-view recordid={recordId}
-                                                parentobjectapiname={parentObjectApiName}
-                                                childobjectapiname={childApiName}
                                                 related-list-options={relatedListOptions}
                                                 onrecordselection={handleRecordSelection}
                                                 onrecordcollapse={handleRecordCollapse}
