@@ -21,7 +21,6 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
 
     
     @track childRecords = [];
-    @track viewableChildRecords = [];
     @track toDisplayFieldNames = [];
 
     // store expanded record information
@@ -60,9 +59,9 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
                 if (Array.isArray(data) && data.length > 0) {
                 this.childRecords = data;
                 //for compactness we will display only 4 records on ui
-                this.viewableChildRecords = this.childRecords.slice(0,4);
+                var viewableChildRecords = this.childRecords.slice(0,4);
 
-                console.log('VIEWABLE CHILD ::: '+JSON.stringify(this.viewableChildRecords));
+                console.log('VIEWABLE CHILD ::: '+JSON.stringify(viewableChildRecords));
         
                 //providing a button to view all records if no. of records > 4
                 // if(this.childRecords.length > 4) {
@@ -71,7 +70,7 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
 
                 //picking up the record id of a record to get object metadata 
                 // for preparing datatable display fields - any record will do
-                this.openedObjectRecordId = this.viewableChildRecords[0].id;
+                this.openedObjectRecordId = viewableChildRecords[0].id;
                 this.showNoDataCard = false;
 
             }
@@ -392,7 +391,8 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
 
     get filteredRecords() {
         // Create a list of transformed records
-        const transformedRecords = this.viewableChildRecords.map(record => {
+        var viewableChildRecords = this.childRecords.slice(0,4)
+        const transformedRecords = viewableChildRecords.map(record => {
             // Extract record ID to use later
             const recordId = record.id;
     
