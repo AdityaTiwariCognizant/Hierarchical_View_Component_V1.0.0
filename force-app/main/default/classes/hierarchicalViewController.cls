@@ -66,12 +66,12 @@ public with sharing class HierarchicalViewController {
                 String relationshipField = parentObjectApiName + '.Id';
                 soqlQuery = 'SELECT ' + String.join(fieldNames, ', ') + 
                             ' FROM ' + childObjectApiName + 
-                            ' WHERE ' + relationshipField + ' = :recordId ORDER BY CreatedDate DESC LIMIT 6';
+                            ' WHERE ' + relationshipField + ' = :recordId ORDER BY CreatedDate DESC LIMIT 7';
             } else {
                 // For standard objects, use the relationship field properly
                 soqlQuery = 'SELECT ' + String.join(fieldNames, ', ') + 
                             ' FROM ' + childObjectApiName + 
-                            ' WHERE ' + childObjectApiName + '.' + parentObjectApiName + 'Id = :recordId ORDER BY CreatedDate DESC LIMIT 6';
+                            ' WHERE ' + childObjectApiName + '.' + parentObjectApiName + 'Id = :recordId ORDER BY CreatedDate DESC LIMIT 7';
             }
 
             // Query the child records using the constructed SOQL query
