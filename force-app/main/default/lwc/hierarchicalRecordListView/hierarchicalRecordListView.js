@@ -395,7 +395,7 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
 
     get filteredRecords() {
         // Create a list of transformed records
-        var viewableChildRecords = this.childRecords;
+        var viewableChildRecords = this.childRecords.slice(0,6);
         const transformedRecords = viewableChildRecords.map(record => {
             // Extract record ID to use later
             const recordId = record.id;
