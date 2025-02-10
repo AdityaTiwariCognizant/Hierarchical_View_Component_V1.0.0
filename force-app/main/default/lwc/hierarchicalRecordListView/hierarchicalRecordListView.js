@@ -58,6 +58,10 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
 
                 if (Array.isArray(data) && data.length > 0) {
                 this.childRecords = data;
+                console.log('APEX RESULT ::: '+JSON.stringify(this.childRecords));
+
+                this.childRecords = this.convertKeysToLowercase(this.childRecords)
+
                 //for compactness we will display only 4 records on ui
                 var viewableChildRecords = this.childRecords.slice(0,4);
 
@@ -196,7 +200,7 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
         this.processSelectedRecordFields();
 
         const evt = new CustomEvent('recordselection', {
-            detail: { id: event.currentTarget.dataset.id,
+            detail: {id: event.currentTarget.dataset.id,
                      name : this.selectedRecord.name 
             }
         });
@@ -391,7 +395,7 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
 
     get filteredRecords() {
         // Create a list of transformed records
-        var viewableChildRecords = this.childRecords.slice(0,4)
+        var viewableChildRecords = this.childRecords;
         const transformedRecords = viewableChildRecords.map(record => {
             // Extract record ID to use later
             const recordId = record.id;
@@ -473,7 +477,7 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
     * Control when to shoe view all button to see further related records
     */
     get showViewAllButton(){
-        return this.childRecords && this.childRecords.length > 4 ? true : false;
+        return this.childRecords && this.childRecords.length > 6 ? true : false;
     }
 
     findChildObjectApiName(){
@@ -491,5 +495,25 @@ export default class HierarchicalRecordListView extends NavigationMixin(Lightnin
             ? this.relatedListOptions[0].parentObjectApiName
             : null; // Return null if relatedListOptions is empty or undefined
     }
+
+    /**
+     * Updating incoming apex data so that attribute names are all lowercase.
+     * Needed because lowecase parameters are being used to access inner data
+     * in js and html
+     */
+
+    convertKeysToLowercase(data) {
+        return data.map(item => {
+            const newItem = {};
+            for (const key in item) {
+                if (item.hasOwnProperty(key)) {
+                    const newKey = key.toLowerCase();
+                    newItem[newKey] = item[key];
+                }
+            }
+            return newItem;
+        });
+    }
+    
 
 }
