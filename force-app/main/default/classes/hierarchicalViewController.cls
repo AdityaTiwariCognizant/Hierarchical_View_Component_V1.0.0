@@ -75,21 +75,12 @@ public with sharing class HierarchicalViewController {
             }
 
             // Query the child records using the constructed SOQL query
-            //List<SObject> childRecords = Database.query(soqlQuery);
-
             List<SObject> childRecords = Security.stripInaccessible(AccessType.READABLE, Database.query(soqlQuery)).getRecords();
 
 
             // Convert the child records into a list of maps (key-value pairs) for easier consumption by the front-end
             for (SObject childRecord : childRecords) {
-                // Map<String, Object> childData = new Map<String, Object>();
-                // for (String fieldName : childFields.keySet()) {
-                //     childData.put(fieldName, childRecord.get(fieldName));
-                // }
-
                 Map<String, Object> childData = childRecord.getPopulatedFieldsAsMap();
-
-
                 result.add(childData);
             }
 
