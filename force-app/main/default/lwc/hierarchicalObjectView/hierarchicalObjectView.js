@@ -65,7 +65,6 @@ export default class HierarchicalObjectView extends LightningElement {
     })
     wireCount({ error, data }) {
         if (data) {
-            console.log('RELATED LIST COUNT DATA :::: '+JSON.stringify(data));
             this.relatedListOptions = this.relatedListOptions.map(item => {
                 if (item.relatedListId === this.relatedListId) {
                     // return { ...item, recordCount: data.records.length};
@@ -76,7 +75,7 @@ export default class HierarchicalObjectView extends LightningElement {
             this.relatedObjectIndex++;
             this.recursiveCallback();
         } else if (error) {
-            console.log('getRelatedListRecords ERROR ### '+JSON.stringify(error));
+            console.error('getRelatedListRecords ERROR ### '+JSON.stringify(error));
           }
     }
 
@@ -99,13 +98,12 @@ export default class HierarchicalObjectView extends LightningElement {
                 this.parentObjectLabel = this.parentObjectApiName; 
             }
 
-            console.log('Record Id:' + this.recordId);
-            console.log('ALL DATA :' + JSON.stringify(data));
+            
             setTimeout(() => {
                 this.isLoading = false;
             }, 200);
         } else if (error) {
-            console.log('Error fetching record:', error);
+            console.error('Error fetching record:', error);
         }        
     }
 
@@ -128,9 +126,8 @@ export default class HierarchicalObjectView extends LightningElement {
             this.parentIcon = null;
             this.parentColor = null;
         }
-        console.log('Parent Api Name: ' + this.parentObjectApiName);
         } else if (error) {
-            console.log('Error fetching parent object info:', error);
+            console.error('Error fetching parent object info:', error);
         }
     }
 
@@ -161,11 +158,9 @@ export default class HierarchicalObjectView extends LightningElement {
 
                         
             }));
-            console.log(' ### ALL ACCESS :' + JSON.stringify(this.relatedListOptions));
 
             if (!this.relatedListOptions || this.relatedListOptions.length === 0) {
                 this.showNoObjCard = true;  // Set flag to show the "No related objects" message
-                console.log('RELATEDLIST EMPTY');
             
             }
 
@@ -174,7 +169,6 @@ export default class HierarchicalObjectView extends LightningElement {
 
 
         } else if (error) {
-            //console.logs('Error fetching related lists:', error);
             this.showNoObjCard = true;
         }
     }
@@ -196,7 +190,6 @@ export default class HierarchicalObjectView extends LightningElement {
                 this.childIcon = ''; 
                 this.childColor = '';
             }
-            console.log('Child Api Name: ' + this.childApiName);
             
         } else if (error) {
             //console.error('Error fetching child object info:', error);
@@ -212,16 +205,13 @@ export default class HierarchicalObjectView extends LightningElement {
 
 
     connectedCallback() {
-        console.log('RECORD ID :'+this.recordId);
         
         if (this.recordId == null){
             this.showHeader = false;
             this.innerBodyClass = "slds-m-around_small";
             this.recordId = this.parentid;
         }
-        console.log('PARENT ID:'+this.parentid);
 
-        
     }
 
     // Removes the __c suffix from apiName if it exists
@@ -275,7 +265,6 @@ export default class HierarchicalObjectView extends LightningElement {
 
         this.selectedRecordId = event.detail.id;
         this.selectedRecordName = event.detail.name;
-        console.log('SELECTED RECORD ID ' + this.selectedRecordId);
         this.modifyHeader = 'slds-m-right_medium link-style';
 
     }
@@ -285,7 +274,6 @@ export default class HierarchicalObjectView extends LightningElement {
     */
 
     handleRecordCollapse(event) {
-        console.log('Selected Record Collapsed');
         this.clearStaleData();
         this.parentid = '';
     }
@@ -332,11 +320,9 @@ export default class HierarchicalObjectView extends LightningElement {
     if (this.relatedObjectIndex < this.relatedListOptions.length) {
         const data = this.relatedListOptions[this.relatedObjectIndex];
         this.relatedListId = data.relatedListId;  // Assign the current relatedListId to objName
-       console.log('RELATED LIST ID *** '+this.relatedListId);
     } else {
         this.relatedObjectIndex = 0; // Reset the index once all items have been processed
         this.relatedListOptions = this.relatedListOptions.filter(item => item.recordCount > 0);
-        console.log('FILTERD LIST ----- '+JSON.stringify(this.relatedListOptions));
         if(this.relatedListOptions == null || this.relatedListOptions.length <= 0){
             this.showNoObjCard = true;
         }
